@@ -11,26 +11,26 @@ class HomePage extends StatelessWidget {
       backgroundColor: const Color(0xFFFFFEFE),
       body: SingleChildScrollView(
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start, // 👈 aligne tout à gauche
+          crossAxisAlignment: CrossAxisAlignment.start, //  aligne tout à gauche
           children: [
-            const SizedBox(height: 60),
+            const SizedBox(height: 50),
 
-            // 🩸 Section logo
+            //  logo
             Padding(
-              padding: const EdgeInsets.only(left: 25), // 👈 espace depuis le bord gauche
+              padding: const EdgeInsets.only(left: 25), //  espace depuis le bord gauche
               child: Image.asset(
                 'assets/LOGO2.png',
-                width: 220, // 👈 taille augmentée
-                height: 80, // 👈 un peu plus grand
+                width: 220, //  taille augmentée
+                height: 80, //  un peu plus grand
                 fit: BoxFit.contain,
               ),
             ),
 
-            const SizedBox(height: 40),
+            const SizedBox(height: 20),
 
-            // 🧾 Section image principale
+            //  Section image
             Container(
-              margin: const EdgeInsets.symmetric(horizontal: 20),
+              margin: const EdgeInsets.symmetric(horizontal: 10),
               height: 190,
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(16),
@@ -40,17 +40,17 @@ class HomePage extends StatelessWidget {
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.2),
-                    blurRadius: 9,
+                    color: const Color(0xFF474646),
+                    blurRadius: 2,
                     offset: const Offset(0, 3),
                   ),
                 ],
               ),
             ),
 
-            const SizedBox(height: 40),
+            const SizedBox(height: 30),
 
-// ❤️ Deux boutons (Request et Donate)
+// Deux boutons
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20),
               child: Row(
@@ -84,28 +84,32 @@ class HomePage extends StatelessWidget {
               ),
             ),
 
-            const SizedBox(height: 50),
+            const SizedBox(height: 0),
 
-            // 💙 Section Donators
+            //  Section Donators
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-              height: 0,
+              margin: const EdgeInsets.symmetric(vertical: 30),
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+              decoration: BoxDecoration(
+                color: Colors.white,
+              ),
               child: const Text(
                 "Top Donators",
                 style: TextStyle(
                   color: Colors.black,
-                  fontSize: 28,
+                  fontSize: 26,
                   fontWeight: FontWeight.bold,
                 ),
+                textAlign: TextAlign.center,
               ),
             ),
 
-            const SizedBox(height: 20),
+            const SizedBox(height: 0),
             const Text(
               "No donators yet",
               style: TextStyle(fontSize: 16, color: Colors.black54),
             ),
-            const SizedBox(height: 40),
+            const SizedBox(height: 10),
           ],
         ),
       ),
@@ -131,23 +135,23 @@ class RequestButton extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        width: 165, // 🔹 plus large
-        height: 140, // 🔹 plus haut
+        width: 170, // 🔹 plus large
+        height: 145, // 🔹 plus haut
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: const Color(0xFFF6F1F1),
           borderRadius: BorderRadius.circular(18),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.2),
-              blurRadius: 10,
+              color: const Color(0xFFF6E5E5),
+              blurRadius: 3,
               offset: const Offset(0, 5),
             ),
           ],
         ),
         child: Stack(
           children: [
-            // 🩸 Titre (2 lignes)
+            //  Titre
             Positioned(
               left: 10,
               top: 8,
@@ -162,7 +166,7 @@ class RequestButton extends StatelessWidget {
               ),
             ),
 
-            // ➡️ Flèche (bold et plus grande)
+            // Flèche
             const Positioned(
               left: 8,
               bottom: 0,
@@ -173,25 +177,23 @@ class RequestButton extends StatelessWidget {
                   Icons.arrow_forward,
                   color: Color(0xFF7A191A),
                   fontWeight: FontWeight.bold,
-                  size: 38,
+                  size: 34,
                 ),
               ),
             ),
 
-            // 🩺 Image (plus grande et un peu plus haute)
+            // Image
             Positioned(
-              right: -10,
-              bottom: -10,
+              right: -12,
+              bottom: -13,
               child: Container(
-                width: 70,
-                height: 70,
+                width: 80,
+                height: 80,
                 decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: const Color(0xFFFFFFFF),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.15),
-                      blurRadius: 8,
+                      color: const Color(0xFFF6F1F1),
+                      blurRadius: 6,
                       offset: const Offset(0, 1),
                     ),
                   ],
