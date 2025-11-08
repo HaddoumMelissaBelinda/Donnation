@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'home_page.dart';
 import 'search_page.dart';
 import 'profil.dart';
+import 'post_a_request.dart';
 
 class MainPage extends StatefulWidget {
   const MainPage({super.key});
@@ -17,34 +18,26 @@ class _MainPageState extends State<MainPage> {
   final List<Widget> _pages = [
     const HomePage(),
     FindDonorPage(),
-    Container(), // Placeholder pour le bouton "+"
+    PostRequestForm(), // Placeholder pour le bouton "+"
     Container(), // Placeholder pour notifications
     const ProfilPage(),
   ];
 
   void _onItemTapped(int index) {
-    // Si c'est le bouton central "+" on peut ouvrir un modal ou page
     if (index == 2) {
-      showDialog(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: const Text("Action"),
-          content: const Text("Vous avez appuyé sur +"),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text("Fermer"),
-            ),
-          ],
-        ),
+      // Navigate to PostRequestForm page
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => PostRequestForm()),
       );
-      return; // Ne change pas la page
+      return; // Do not change _selectedIndex for bottom nav
     }
 
     setState(() {
-      _selectedIndex = index;
+      _selectedIndex = 2;
     });
   }
+
 
   @override
   Widget build(BuildContext context) {

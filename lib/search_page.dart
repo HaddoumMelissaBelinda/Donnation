@@ -1,3 +1,4 @@
+import 'package:donat_algeria/home_page.dart';
 import 'package:flutter/material.dart';
 
 class FindDonorPage extends StatelessWidget {
@@ -38,15 +39,24 @@ class FindDonorPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        leading: Icon(Icons.arrow_back, color: Colors.black),
-        title: const Text(
+        leading: IconButton( ///icone de retour vers home page 
+          icon: Icon(Icons.arrow_back, color: Colors.black),
+          onPressed: () {
+            // Naviguer vers la page d'accueil lorsque le bouton est cliqué
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => HomePage()),
+            );
+          },
+        ),
+        title: const Text( //titre de la page
           'Find Donor/Receiver',
           style: TextStyle(color: Colors.black),
         ),
         backgroundColor: Colors.white,
         elevation: 0,
         actions: [
-          IconButton(
+          IconButton( //icone de filtre
             icon: Icon(Icons.filter_list, color: Colors.red),
             onPressed: () {},
           ),
