@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
-
+import 'package:Donnation/home_page.dart';
 class PostRequestForm extends StatefulWidget {
   const PostRequestForm({super.key});
 
   @override
+
   State<PostRequestForm> createState() => _PostRequestFormState();
 }
 
@@ -26,11 +27,22 @@ class _PostRequestFormState extends State<PostRequestForm> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
+    appBar: AppBar(
+        leading: IconButton( ///icone de retour vers home page
+          icon: Icon(Icons.arrow_back, color: Colors.black),
+          onPressed: () {
+            // Naviguer vers la page d'accueil lorsque le bouton est cliqué
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => HomePage()),
+            );
+          },
+        ),
+
         title: const Text("Post a Request", style: TextStyle(color: Colors.black)),
         backgroundColor: Colors.white,
         elevation: 0,
-        leading: const Icon(Icons.arrow_back, color: Colors.black),
+
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),

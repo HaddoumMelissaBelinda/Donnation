@@ -8,31 +8,31 @@ class FindDonorPage extends StatelessWidget {
       'name': 'Sarah Benali',
       'location': 'Algiers, Algeria',
       'blood': 'A+',
-      'image': 'assets/images/sarah.png'
+      'image': 'assets/profile.png'
     },
     {
       'name': 'Yucef Rezgui',
       'location': 'Tizi Ouzou, Algeria',
       'blood': 'B+',
-      'image': 'assets/images/yucef.png'
+      'image': 'assets/yucef.png'
     },
     {
       'name': 'Ramy Ghoumari',
       'location': 'Medea, Algeria',
       'blood': 'A-',
-      'image': 'assets/images/ramy.png'
+      'image': 'assets/ramy.png'
     },
     {
       'name': 'Mahdi Cheurfa',
       'location': 'Bejaia, Algeria',
       'blood': 'AB+',
-      'image': 'assets/images/mahdi.png'
+      'image': 'assets/amine.png'
     },
     {
       'name': 'Islam Benali',
       'location': 'Algiers, Algeria',
       'blood': 'O+',
-      'image': 'assets/images/islam.png'
+      'image': 'assets/mohamed.png'
     },
   ];
 
