@@ -34,7 +34,7 @@ class _MainPageState extends State<MainPage> {
     }
 
     setState(() {
-      _selectedIndex = 2;
+      _selectedIndex = index;
     });
   }
 
