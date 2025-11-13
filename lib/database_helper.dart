@@ -19,8 +19,7 @@ class DatabaseHelper {
     return await openDatabase(path, version: 1, onCreate: _createDB);
   }
 
-  /// ✅ Fusion des deux tables dans une seule fonction
-  Future _createDB(Database db, int version) async {
+   Future _createDB(Database db, int version) async {
     await db.execute('''
       CREATE TABLE requests(
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -34,37 +33,34 @@ class DatabaseHelper {
       )
     ''');
 
-    await db.execute('''
+  await db.execute('''
       CREATE TABLE notifications (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        senderName TEXT NOT NULL,
         receiverId INTEGER NOT NULL,
-        type TEXT NOT NULL,
         message TEXT NOT NULL,
         location TEXT,
         bloodGroup TEXT,
         timestamp TEXT NOT NULL
-      )
     ''');
-  }
+}
 
-  Future<int> insertNotification(Map<String, dynamic> data) async {
-    final db = await instance.database;
-    return await db.insert('notifications', data);
-  }
+Future<int> insertNotification(Map<String, dynamic> data) async {
+  final db = await instance.database;
+  return await db.insert('notifications', data);
+}
 
-  Future<List<Map<String, dynamic>>> getNotifications(int receiverId) async {
-    final db = await instance.database;
-    return await db.query(
-      'notifications',
-      where: 'receiverId = ?',
-      whereArgs: [receiverId],
-      orderBy: 'id DESC',
-    );
-  }
+Future<List<Map<String, dynamic>>> getNotifications(int receiverId) async {
+  final db = await instance.database;
+  return await db.query(
+    'notifications',
+    where: 'receiverId = ?',
+    whereArgs: [receiverId],
+    orderBy: 'id DESC',
+  );
+}
 
-  Future close() async {
-    final db = await instance.database;
-    db.close();
-  }
+Future close() async {
+  final db = await instance.database;
+  db.close();
+}
 }
