@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:Donnation/home_page.dart';
+import 'database_helper.dart';
 import 'MainPage.dart';
+
 class PostRequestForm extends StatefulWidget {
   const PostRequestForm({super.key});
 
@@ -22,6 +26,72 @@ class _PostRequestFormState extends State<PostRequestForm> {
   final List<String> needTypes = ["Blood", "Platelets", "Bone Marrow", "Plasma"];
   final List<String> bloodGroups = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
 
+  bool _validatePhone(String phone) {
+    final regExp = RegExp(r'^(06|07|05)\d{8}$');
+    return regExp.hasMatch(phone);
+  }
+  String? selectedCommune;
+  final List<String> communes = [
+    "Alger-Centre",
+    "El Madania",
+    "El Mouradia",
+    "Sidi M'Hamed",
+    "Bab El Oued",
+    "Bologhine",
+    "Casbah",
+    "Oued Koriche",
+    "Raïs Hamidou",
+    "Baraki",
+    "Les Eucalyptus",
+    "Sidi Moussa",
+    "Bir Mourad Raïs",
+    "Birkhadem",
+    "Djasr Kasentina",
+    "Hydra",
+    "Saoula",
+    "Birtouta",
+    "Ouled Chebel",
+    "Tessala El Merdja",
+    "Ben Aknoun",
+    "Beni Messous",
+    "Bouzareah",
+    "El Biar",
+    "Aïn Benian",
+    "Chéraga",
+    "Dely Ibrahim",
+    "El Hammamet",
+    "Ouled Fayet",
+    "Aïn Taya",
+    "Bab Ezzouar",
+    "Bordj El Bahri",
+    "Bordj El Kiffan",
+    "Dar El Beïda",
+    "El Marsa",
+    "Mohammadia",
+    "Baba Hassen",
+    "Douera",
+    "Draria",
+    "El Achour",
+    "Khraicia",
+    "Bachdjerrah",
+    "Bourouba",
+    "El Harrach",
+    "Oued Smar",
+    "Belouizdad",
+    "El Magharia",
+    "Hussein Dey",
+    "Kouba",
+    "H'raoua",
+    "Reghaïa",
+    "Rouïba",
+    "Mahelma",
+    "Rahmania",
+    "Souidania",
+    "Staoueli",
+    "Zeralda"
+  ];
+
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -40,7 +110,6 @@ class _PostRequestFormState extends State<PostRequestForm> {
         backgroundColor: Colors.white,
         elevation: 0,
       ),
-
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -132,26 +201,40 @@ class _PostRequestFormState extends State<PostRequestForm> {
 
             const SizedBox(height: 20),
 
+
             const Text("Phone Number *"),
             TextField(
               controller: phoneCtrl,
               keyboardType: TextInputType.phone,
+              inputFormatters: [
+                FilteringTextInputFormatter.digitsOnly, // Autorise uniquement les chiffres
+                LengthLimitingTextInputFormatter(10), // Limite à 10 chiffres
+              ],
               decoration: const InputDecoration(
                 prefixIcon: Icon(Icons.phone),
-                hintText: "+213 - xxxxxxxxx",
+                hintText: "Ex: 06xxxxxxxx",
               ),
             ),
 
             const SizedBox(height: 20),
 
             const Text("Location *"),
-            TextField(
-              controller: locationCtrl,
-              decoration: const InputDecoration(
-                prefixIcon: Icon(Icons.location_on),
-                hintText: "Select a Location",
-              ),
+            DropdownButtonFormField<String>(
+              value: selectedCommune, // null au départ
+              hint: const Text("Select a Location"),
+              items: communes.map((commune) {
+                return DropdownMenuItem(
+                  value: commune,
+                  child: Text(commune),
+                );
+              }).toList(),
+              onChanged: (value) {
+                setState(() {
+                  selectedCommune = value; // met à jour la commune sélectionnée
+                });
+              },
             ),
+
 
             const SizedBox(height: 30),
 
@@ -160,9 +243,36 @@ class _PostRequestFormState extends State<PostRequestForm> {
               height: 50,
               child: ElevatedButton(
                 style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-                onPressed: () {
-                  // ici tu peux gérer la soumission
-                  print("Patient: ${nameCtrl.text}, Blood group: $selectedBloodGroup");
+                onPressed: () async {
+                  final phone = phoneCtrl.text.trim();
+                  if (!_validatePhone(phone)) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Numéro de téléphone invalide !')),
+                    );
+                    return;
+                  }
+
+                  final request = {
+                    'name': nameCtrl.text,
+                    'age': selectedAge,
+                    'gender': selectedGender,
+                    'needType': selectedNeedType,
+                    'bloodGroup': selectedBloodGroup,
+                    'phone': phone,
+                    'location': selectedCommune ??'',
+                  };
+
+                  await DatabaseHelper.instance.insertRequest(request);
+
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('request published')),
+                  );
+
+                  // Retour à la page Home
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(builder: (context) => const HomePage()),
+                  );
                 },
                 child: const Text("Publish", style: TextStyle(fontSize: 18)),
               ),

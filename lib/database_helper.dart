@@ -19,7 +19,8 @@ class DatabaseHelper {
     return await openDatabase(path, version: 1, onCreate: _createDB);
   }
 
-   Future _createDB(Database db, int version) async {
+  Future _createDB(Database db, int version) async {
+    // Table requests
     await db.execute('''
       CREATE TABLE requests(
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -33,7 +34,8 @@ class DatabaseHelper {
       )
     ''');
 
-  await db.execute('''
+    // Table notifications
+    await db.execute('''
       CREATE TABLE notifications (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         receiverId INTEGER NOT NULL,
@@ -41,14 +43,12 @@ class DatabaseHelper {
         location TEXT,
         bloodGroup TEXT,
         timestamp TEXT NOT NULL
+      )
     ''');
-}
 
-Future<int> insertNotification(Map<String, dynamic> data) async {
-  final db = await instance.database;
-  return await db.insert('notifications', data);
-}
+  }
 
+<<<<<<< HEAD
 Future<List<Map<String, dynamic>>> getNotifications(int receiverId) async {
   final db = await instance.database;
   return await db.query(
@@ -78,5 +78,33 @@ Future<List<Map<String, dynamic>>> getNotifications(int receiverId) async {
 Future close() async {
   final db = await instance.database;
   db.close();
-}
+=======
+  // Méthodes pour requests
+  Future<int> insertRequest(Map<String, dynamic> row) async {
+    final db = await instance.database;
+    return await db.insert('requests', row);
+  }
+
+  // Méthodes pour notifications
+  Future<int> insertNotification(Map<String, dynamic> data) async {
+    final db = await instance.database;
+    return await db.insert('notifications', data);
+  }
+
+  Future<List<Map<String, dynamic>>> getNotifications(int receiverId) async {
+    final db = await instance.database;
+    return await db.query(
+      'notifications',
+      where: 'receiverId = ?',
+      whereArgs: [receiverId],
+      orderBy: 'id DESC',
+    );
+  }
+
+  // Méthode close
+  Future close() async {
+    final db = await instance.database;
+    db.close();
+  }
+>>>>>>> origin/main
 }
