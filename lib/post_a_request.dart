@@ -82,7 +82,7 @@ class _PostRequestFormState extends State<PostRequestForm> {
                     children: [
                       const Text("Sex *"),
                       DropdownButtonFormField(
-                        value: selectedGender,
+                        initialValue: selectedGender,
                         items: genders.map((g) => DropdownMenuItem(
                           value: g,
                           child: Text(g),
