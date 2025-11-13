@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-import 'home_page.dart';
-import 'select_location_page.dart';
+import 'package:Donnation/home_page.dart';
 
 class PostRequestForm extends StatefulWidget {
   const PostRequestForm({super.key});
@@ -41,6 +40,7 @@ class _PostRequestFormState extends State<PostRequestForm> {
         backgroundColor: Colors.white,
         elevation: 0,
       ),
+
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -94,6 +94,7 @@ class _PostRequestFormState extends State<PostRequestForm> {
                 ),
               ],
             ),
+
             const SizedBox(height: 20),
 
             const Text("Need Type *"),
@@ -111,6 +112,7 @@ class _PostRequestFormState extends State<PostRequestForm> {
                 );
               }).toList(),
             ),
+
             const SizedBox(height: 20),
 
             const Text("Blood Group *"),
@@ -128,6 +130,7 @@ class _PostRequestFormState extends State<PostRequestForm> {
                 );
               }).toList(),
             ),
+
             const SizedBox(height: 20),
 
             const Text("Phone Number *"),
@@ -139,29 +142,18 @@ class _PostRequestFormState extends State<PostRequestForm> {
                 hintText: "+213 - xxxxxxxxx",
               ),
             ),
+
             const SizedBox(height: 20),
 
             const Text("Location *"),
             TextField(
               controller: locationCtrl,
-              readOnly: true,
               decoration: const InputDecoration(
                 prefixIcon: Icon(Icons.location_on),
                 hintText: "Select a Location",
               ),
-              onTap: () async {
-                final result = await Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => SelectLocationPage()),
-                );
-
-                if (result != null) {
-                  setState(() {
-                    locationCtrl.text = "Lat: ${result.latitude}, Lng: ${result.longitude}";
-                  });
-                }
-              },
             ),
+
             const SizedBox(height: 30),
 
             SizedBox(
@@ -170,7 +162,8 @@ class _PostRequestFormState extends State<PostRequestForm> {
               child: ElevatedButton(
                 style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
                 onPressed: () {
-                  print("Patient: ${nameCtrl.text}, Blood group: $selectedBloodGroup, Location: ${locationCtrl.text}");
+                  // ici tu peux gérer la soumission
+                  print("Patient: ${nameCtrl.text}, Blood group: $selectedBloodGroup");
                 },
                 child: const Text("Publish", style: TextStyle(fontSize: 18)),
               ),
