@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:Donnation/home_page.dart';
+import 'home_page.dart';
+import 'select_location_page.dart';
+
 class PostRequestForm extends StatefulWidget {
   const PostRequestForm({super.key});
 
   @override
-
   State<PostRequestForm> createState() => _PostRequestFormState();
 }
 
@@ -15,7 +16,6 @@ class _PostRequestFormState extends State<PostRequestForm> {
 
   String selectedAge = "25";
   String selectedGender = "Male";
-
   String selectedNeedType = "Blood";
   String selectedBloodGroup = "A+";
 
@@ -27,22 +27,19 @@ class _PostRequestFormState extends State<PostRequestForm> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-    appBar: AppBar(
-        leading: IconButton( ///icone de retour vers home page
-          icon: Icon(Icons.arrow_back, color: Colors.black),
+      appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.black),
           onPressed: () {
-            // Naviguer vers la page d'accueil lorsque le bouton est cliqué
             Navigator.pushReplacement(
               context,
-              MaterialPageRoute(builder: (context) => HomePage()),
+              MaterialPageRoute(builder: (context) => const HomePage()),
             );
           },
         ),
-
         title: const Text("Post a Request", style: TextStyle(color: Colors.black)),
         backgroundColor: Colors.white,
         elevation: 0,
-
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
@@ -69,8 +66,11 @@ class _PostRequestFormState extends State<PostRequestForm> {
                       const Text("Age *"),
                       DropdownButtonFormField(
                         value: selectedAge,
-                        items: ages.map((age) => DropdownMenuItem(value: age, child: Text(age))).toList(),
-                        onChanged: (v) => setState(() => selectedAge = v.toString()),
+                        items: ages.map((age) => DropdownMenuItem(
+                          value: age,
+                          child: Text(age),
+                        )).toList(),
+                        onChanged: (v) => setState(() => selectedAge = v!),
                       ),
                     ],
                   ),
@@ -83,8 +83,11 @@ class _PostRequestFormState extends State<PostRequestForm> {
                       const Text("Sex *"),
                       DropdownButtonFormField(
                         value: selectedGender,
-                        items: genders.map((g) => DropdownMenuItem(value: g, child: Text(g))).toList(),
-                        onChanged: (v) => setState(() => selectedGender = v.toString()),
+                        items: genders.map((g) => DropdownMenuItem(
+                          value: g,
+                          child: Text(g),
+                        )).toList(),
+                        onChanged: (v) => setState(() => selectedGender = v!),
                       ),
                     ],
                   ),
@@ -102,7 +105,7 @@ class _PostRequestFormState extends State<PostRequestForm> {
                   label: Text(type),
                   selectedColor: Colors.red,
                   labelStyle: TextStyle(color: selected ? Colors.white : Colors.red),
-                  shape: StadiumBorder(side: BorderSide(color: Colors.red)),
+                  shape: const StadiumBorder(side: BorderSide(color: Colors.red)),
                   selected: selected,
                   onSelected: (_) => setState(() => selectedNeedType = type),
                 );
@@ -119,7 +122,7 @@ class _PostRequestFormState extends State<PostRequestForm> {
                   label: Text(bg),
                   selectedColor: Colors.red,
                   labelStyle: TextStyle(color: selected ? Colors.white : Colors.red),
-                  shape: const CircleBorder(side: BorderSide(color: Colors.red)),
+                  shape: const StadiumBorder(side: BorderSide(color: Colors.red)),
                   selected: selected,
                   onSelected: (_) => setState(() => selectedBloodGroup = bg),
                 );
@@ -141,10 +144,23 @@ class _PostRequestFormState extends State<PostRequestForm> {
             const Text("Location *"),
             TextField(
               controller: locationCtrl,
+              readOnly: true,
               decoration: const InputDecoration(
                 prefixIcon: Icon(Icons.location_on),
                 hintText: "Select a Location",
               ),
+              onTap: () async {
+                final result = await Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => SelectLocationPage()),
+                );
+
+                if (result != null) {
+                  setState(() {
+                    locationCtrl.text = "Lat: ${result.latitude}, Lng: ${result.longitude}";
+                  });
+                }
+              },
             ),
             const SizedBox(height: 30),
 
@@ -153,7 +169,9 @@ class _PostRequestFormState extends State<PostRequestForm> {
               height: 50,
               child: ElevatedButton(
                 style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-                onPressed: () {},
+                onPressed: () {
+                  print("Patient: ${nameCtrl.text}, Blood group: $selectedBloodGroup, Location: ${locationCtrl.text}");
+                },
                 child: const Text("Publish", style: TextStyle(fontSize: 18)),
               ),
             ),

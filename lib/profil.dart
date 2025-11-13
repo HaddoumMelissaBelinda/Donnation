@@ -101,7 +101,7 @@ class ProfilPage extends StatelessWidget {
                                 Switch(
                                   value: true,
                                   onChanged: (val) {},
-                                  activeColor: Colors.white,
+                                  activeThumbColor: Colors.white,
                                 ),
                               ],
                             ),
