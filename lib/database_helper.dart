@@ -34,14 +34,6 @@ class DatabaseHelper {
       )
     ''');
 
-    // Table communes
-    await db.execute('''
-      CREATE TABLE communes(
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        name TEXT NOT NULL
-      )
-    ''');
-
     // Table notifications
     await db.execute('''
       CREATE TABLE notifications (
@@ -54,33 +46,12 @@ class DatabaseHelper {
       )
     ''');
 
-    // Insérer des communes par défaut
-    final communesList = [
-      "Bab El Oued",
-      "Belouizdad",
-      "El Harrach",
-      "El Madania",
-      "Kouba",
-      "Hydra",
-      "Birkhadem",
-      "Bir Mourad Raïs",
-      "Mohamed Belouizdad"
-    ];
-    for (var commune in communesList) {
-      await db.insert('communes', {'name': commune});
-    }
   }
 
   // Méthodes pour requests
   Future<int> insertRequest(Map<String, dynamic> row) async {
     final db = await instance.database;
     return await db.insert('requests', row);
-  }
-
-  Future<List<String>> getCommunes() async {
-    final db = await instance.database;
-    final result = await db.query('communes', orderBy: 'name');
-    return result.map((row) => row['name'] as String).toList();
   }
 
   // Méthodes pour notifications
