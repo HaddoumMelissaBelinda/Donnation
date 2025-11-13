@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-
+import 'MainPage.dart';
 class ProfilPage extends StatelessWidget {
   const ProfilPage({super.key});
 
@@ -8,18 +8,20 @@ class ProfilPage extends StatelessWidget {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.black),
-          onPressed: () => Navigator.pop(context),
+          onPressed: () {
+            Navigator.of(context).pushAndRemoveUntil(
+              MaterialPageRoute(builder: (context) => const MainPage()),
+                  (route) => false,
+            );
+
+          },
+
         ),
-        title: const Text(
-          "Profile",
-          style: TextStyle(
-              color: Colors.black, fontWeight: FontWeight.bold, fontSize: 20),
-        ),
-        centerTitle: false, // <-- Aligne le titre à gauche
+        title: const Text("Profile", style: TextStyle(color: Colors.black)),
+        backgroundColor: Colors.white,
+        elevation: 0,
       ),
       body: SingleChildScrollView(
         child: Center(

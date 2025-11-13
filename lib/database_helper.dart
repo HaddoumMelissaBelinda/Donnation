@@ -20,6 +20,7 @@ class DatabaseHelper {
   }
 
   Future _createDB(Database db, int version) async {
+    // Table requests
     await db.execute('''
       CREATE TABLE requests(
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -33,6 +34,7 @@ class DatabaseHelper {
       )
     ''');
 
+    // Table communes
     await db.execute('''
       CREATE TABLE communes(
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -40,7 +42,19 @@ class DatabaseHelper {
       )
     ''');
 
-    // Insérer quelques communes par défaut
+    // Table notifications
+    await db.execute('''
+      CREATE TABLE notifications (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        receiverId INTEGER NOT NULL,
+        message TEXT NOT NULL,
+        location TEXT,
+        bloodGroup TEXT,
+        timestamp TEXT NOT NULL
+      )
+    ''');
+
+    // Insérer des communes par défaut
     final communesList = [
       "Bab El Oued",
       "Belouizdad",
@@ -57,19 +71,35 @@ class DatabaseHelper {
     }
   }
 
-  // Méthode pour insérer une requête
+  // Méthodes pour requests
   Future<int> insertRequest(Map<String, dynamic> row) async {
     final db = await instance.database;
     return await db.insert('requests', row);
   }
 
-  // Méthode pour récupérer les communes
   Future<List<String>> getCommunes() async {
     final db = await instance.database;
     final result = await db.query('communes', orderBy: 'name');
     return result.map((row) => row['name'] as String).toList();
   }
 
+  // Méthodes pour notifications
+  Future<int> insertNotification(Map<String, dynamic> data) async {
+    final db = await instance.database;
+    return await db.insert('notifications', data);
+  }
+
+  Future<List<Map<String, dynamic>>> getNotifications(int receiverId) async {
+    final db = await instance.database;
+    return await db.query(
+      'notifications',
+      where: 'receiverId = ?',
+      whereArgs: [receiverId],
+      orderBy: 'id DESC',
+    );
+  }
+
+  // Méthode close
   Future close() async {
     final db = await instance.database;
     db.close();

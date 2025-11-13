@@ -3,7 +3,10 @@ import 'search_page.dart';
 import 'post_a_request.dart';
 // 🔹 Widget principal : HomePage
 class HomePage extends StatelessWidget {
-  const HomePage({super.key});
+  final void Function(int)? onNavigate; // ← Ajouter ce paramètre
+
+  const HomePage({super.key, this.onNavigate});
+
 
   @override
   Widget build(BuildContext context) {
