@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:Donnation/home_page.dart';
-
+import 'MainPage.dart';
 class PostRequestForm extends StatefulWidget {
   const PostRequestForm({super.key});
 
@@ -32,8 +31,9 @@ class _PostRequestFormState extends State<PostRequestForm> {
           onPressed: () {
             Navigator.pushReplacement(
               context,
-              MaterialPageRoute(builder: (context) => const HomePage()),
+              MaterialPageRoute(builder: (context) => const MainPage()),
             );
+
           },
         ),
         title: const Text("Post a Request", style: TextStyle(color: Colors.black)),
@@ -65,7 +65,6 @@ class _PostRequestFormState extends State<PostRequestForm> {
                     children: [
                       const Text("Age *"),
                       DropdownButtonFormField(
-                        value: selectedAge,
                         items: ages.map((age) => DropdownMenuItem(
                           value: age,
                           child: Text(age),

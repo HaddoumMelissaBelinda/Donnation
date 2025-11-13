@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'home_page.dart';
 import 'search_page.dart';
 import 'profil.dart';
+import 'notifications.dart';
 import 'post_a_request.dart';
 
 class MainPage extends StatefulWidget {
@@ -13,57 +14,56 @@ class MainPage extends StatefulWidget {
 
 class _MainPageState extends State<MainPage> {
   int _selectedIndex = 0;
+  late List<Widget> _pages;
 
-  // List of pages
-  final List<Widget> _pages = [
-    const HomePage(),
-    FindDonorPage(),
-    PostRequestForm(), // Placeholder pour le bouton "+"
-    Container(), // Placeholder pour notifications
-    const ProfilPage(),
-  ];
+  @override
+  void initState() {
+    super.initState();
+    _pages = [
+      HomePage(onNavigate: _onItemTapped),
+      FindDonorPage(),
+      NotificationsPage(receiverId: 1), // 👈 ajoute un ID ici
+      const ProfilPage(),
+    ];
+  }
 
   void _onItemTapped(int index) {
     if (index == 2) {
-      // Navigate to PostRequestForm page
       Navigator.push(
         context,
-        MaterialPageRoute(builder: (context) => PostRequestForm()),
+        MaterialPageRoute(builder: (_) => const PostRequestForm()),
       );
-      return; // Do not change _selectedIndex for bottom nav
+      return;
     }
-
     setState(() {
-      _selectedIndex = index;
+      _selectedIndex = index > 2 ? index - 1 : index;
     });
   }
-
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: _pages[_selectedIndex], // Affiche la page sélectionnée
+      body: _pages[_selectedIndex],
       bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _selectedIndex > 2 ? _selectedIndex : _selectedIndex,
+        currentIndex: _selectedIndex >= 2 ? _selectedIndex + 1 : _selectedIndex,
         selectedItemColor: Colors.red,
         unselectedItemColor: Colors.grey,
         onTap: _onItemTapped,
-        items: [
-          const BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
-          const BottomNavigationBarItem(icon: Icon(Icons.search), label: 'Search'),
+        type: BottomNavigationBarType.fixed,
+        items: const [
+          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
+          BottomNavigationBarItem(icon: Icon(Icons.search), label: 'Search'),
           BottomNavigationBarItem(
             icon: CircleAvatar(
               radius: 18,
               backgroundColor: Colors.red,
-              child: const Icon(Icons.add, color: Colors.white),
+              child: Icon(Icons.add, color: Colors.white),
             ),
             label: '',
           ),
-          const BottomNavigationBarItem(
-              icon: Icon(Icons.notifications), label: 'Alerts'),
-          const BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
+          BottomNavigationBarItem(icon: Icon(Icons.notifications), label: 'Alerts'),
+          BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
         ],
-        type: BottomNavigationBarType.fixed,
       ),
     );
   }

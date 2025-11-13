@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'home_page.dart'; // la page d’accueil
-
+import 'mainPage.dart';
 void main() {
   runApp(const MyApp());
 }
@@ -33,7 +32,7 @@ class _SplashScreenState extends State<SplashScreen> {
     // 3 secondes avant de passer à la HomePage
     Timer(const Duration(seconds: 3), () {
       Navigator.pushReplacement(
-          context, MaterialPageRoute(builder: (_) => const HomePage()));
+          context, MaterialPageRoute(builder: (_) => const MainPage()));
     });
   }
 
