@@ -1,32 +1,49 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'notifications.dart';
+import 'database_helper.dart';
 
 class DonorProfileSheet extends StatelessWidget {
   final Map<String, dynamic> donor;
+  final Map<String, dynamic> patient;
 
-  const DonorProfileSheet({Key? key, required this.donor}) : super(key: key);
+  const DonorProfileSheet({Key? key, required this.donor, required this.patient}) : super(key: key);
 
   Future<void> _makePhoneCall(BuildContext context, String phoneNumber) async {
     if (phoneNumber.isEmpty || phoneNumber == "0") {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('❌ Numéro invalide')),
       );
-      debugPrint('❌ Numéro invalide');
       return;
     }
 
     final Uri callUri = Uri(scheme: 'tel', path: phoneNumber);
-
     try {
       await launchUrl(callUri);
-      debugPrint('📞 Lancement de l\'appel vers $phoneNumber');
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('❌ Impossible de lancer l’appel vers $phoneNumber')),
       );
-      debugPrint('❌ Impossible de lancer l\'appel vers $phoneNumber: $e');
     }
+  }
+
+  Future<void> _sendRequest(BuildContext context) async {
+    final db = DatabaseHelper.instance;
+    await db.insertNotification({
+      'senderName': patient['name'],
+      'receiverId': donor['id'],
+      'type': 'request',
+      'message': 'Voulez-vous donner votre sang ?',
+      'location': donor['location'],
+      'bloodGroup': donor['blood'],
+      'status': 'pending',
+      'timestamp': DateTime.now().toIso8601String(),
+    });
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('✅ Demande envoyée au donneur')),
+    );
+
+    Navigator.pop(context);
   }
 
   @override
@@ -40,7 +57,6 @@ class DonorProfileSheet extends StatelessWidget {
       ),
       child: Column(
         children: [
-          // Barre de drag
           Container(
             width: 50,
             height: 5,
@@ -50,8 +66,6 @@ class DonorProfileSheet extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 16),
-
-          // Photo du donneur
           CircleAvatar(
             radius: 50,
             backgroundImage: donor['image'] != null
@@ -59,59 +73,31 @@ class DonorProfileSheet extends StatelessWidget {
                 : const AssetImage('assets/default_avatar.png'),
           ),
           const SizedBox(height: 10),
-
-          // Nom du donneur
           Text(
             donor['name'] ?? 'Unknown Donor',
             style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 5),
-
-          // Localisation et type sanguin
           Text(
             'Location: ${donor['location'] ?? 'Unknown'} • Blood Type: ${donor['blood'] ?? '--'}',
             style: TextStyle(fontSize: 16, color: Colors.grey[600]),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 20),
-
-          // Boutons Call & Request
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
-              // Bouton Call
               ElevatedButton.icon(
-                onPressed: () {
-                  final phone = donor['phone'] ?? '0';
-                  _makePhoneCall(context, phone); // ← Appel direct via téléphone
-                },
+                onPressed: () => _makePhoneCall(context, donor['phone'] ?? '0'),
                 icon: const Icon(Icons.call),
                 label: const Text('Call Now'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.green,
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                ),
+                style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
               ),
-
-              // Bouton Request
               ElevatedButton.icon(
                 icon: const Icon(Icons.bloodtype),
                 label: const Text('Request'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.red,
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                ),
-                onPressed: () {
-                  Navigator.pop(context);
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => NotificationsPage(
-                        receiverId: donor['id'] ?? 0,
-                      ),
-                    ),
-                  );
-                },
+                style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+                onPressed: () => _sendRequest(context),
               ),
             ],
           ),

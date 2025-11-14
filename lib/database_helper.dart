@@ -39,16 +39,21 @@ class DatabaseHelper {
     ''');
 
     // Table notifications
+    // Création initiale de la table
     await db.execute('''
-      CREATE TABLE notifications (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        receiverId INTEGER NOT NULL,
-        message TEXT NOT NULL,
-        location TEXT,
-        bloodGroup TEXT,
-        timestamp TEXT NOT NULL
-      )
-    ''');
+  CREATE TABLE notifications (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    senderId INTEGER,
+    senderName TEXT,
+    receiverId INTEGER NOT NULL,
+    type TEXT,
+    message TEXT NOT NULL,
+    location TEXT,
+    bloodGroup TEXT,
+    status TEXT,
+    timestamp TEXT NOT NULL
+  )
+''');
 
     // Table users (optionnelle, si tu veux gérer login)
     await db.execute('''
@@ -68,18 +73,55 @@ class DatabaseHelper {
   }
 
   // ---------------- Méthodes Notifications ----------------
+  // Insérer une notification
   Future<int> insertNotification(Map<String, dynamic> data) async {
     final db = await instance.database;
     return await db.insert('notifications', data);
   }
 
-  Future<List<Map<String, dynamic>>> getNotifications(int receiverId) async {
+  // Récupérer toutes les notifications (sans filtrer)
+  Future<List<Map<String, dynamic>>> getAllNotifications() async {
     final db = await instance.database;
-    return await db.query(
+    final result = await db.query(
       'notifications',
-      where: 'receiverId = ?',
-      whereArgs: [receiverId],
-      orderBy: 'id DESC',
+      orderBy: 'timestamp DESC', // les plus récentes en premier
+    );
+    return result;
+  }
+
+  Future<void> sendRequestNotifications(int requestId) async {
+    final db = await database;
+
+    // Récupérer uniquement les utilisateurs qui sont des donneurs
+    final donors = await db.query(
+      'users',
+      where: 'type = ?',
+      whereArgs: ['Donor'],
+    );
+
+    for (var donor in donors) {
+      await insertNotification({
+        'senderId': null,
+        'senderName': 'System',
+        'receiverId': donor['id'], // id du donneur
+        'type': 'request',
+        'message': 'Un patient a besoin de sang !',
+        'status': 'pending',
+        'timestamp': DateTime.now().toIso8601String(),
+      });
+    }
+  }
+
+
+
+  // Mettre à jour le statut d'une notification
+  Future<int> updateNotificationStatus(int id, String status) async {
+    final db = await instance.database;
+    return await db.update(
+      'notifications',
+      {'status': status},
+      where: 'id = ?',
+      whereArgs: [id],
     );
   }
 
@@ -98,6 +140,18 @@ class DatabaseHelper {
     }
     return null;
   }
+
+  Future<Map<String, dynamic>?> loginUser(String email, String password) async {
+    final db = await database;
+    final res = await db.query(
+      'utilisateur',
+      where: 'email = ? AND mot_de_passe = ?',
+      whereArgs: [email, password],
+    );
+    if (res.isNotEmpty) return res.first;
+    return null;
+  }
+
 
   /// Marquer un utilisateur comme connecté
   Future<void> markUserAsLoggedIn(int userId) async {

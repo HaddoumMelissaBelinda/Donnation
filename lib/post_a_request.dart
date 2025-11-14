@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:Donnation/home_page.dart';
 import 'database_helper.dart';
 import 'MainPage.dart';
 
@@ -19,40 +18,28 @@ class _PostRequestFormState extends State<PostRequestForm> {
   String selectedGender = "Male";
   String selectedNeedType = "Blood";
   String selectedBloodGroup = "A+";
-  String? selectedCommune;
 
   final List<String> ages = List.generate(60, (i) => (i + 18).toString());
   final List<String> genders = ["Male", "Female"];
-  final List<String> needTypes = ["Blood", "Platelets", "Plasma", "Bone Marrow"];
+  final List<String> needTypes = ["Blood", "Platelets", "Bone Marrow", "Plasma"];
   final List<String> bloodGroups = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
+
+  String? selectedCommune;
   final List<String> communes = [
-    "Alger-Centre", "El Madania", "El Mouradia", "Sidi M'Hamed", "Bab El Oued",
-    "Bologhine", "Casbah", "Oued Koriche", "Raïs Hamidou", "Baraki",
-    "Les Eucalyptus", "Sidi Moussa", "Bir Mourad Raïs", "Birkhadem",
-    "Djasr Kasentina", "Hydra", "Saoula", "Birtouta", "Ouled Chebel",
-    "Tessala El Merdja", "Ben Aknoun", "Beni Messous", "Bouzareah",
-    "El Biar", "Aïn Benian", "Chéraga", "Dely Ibrahim", "El Hammamet",
-    "Ouled Fayet", "Aïn Taya", "Bab Ezzouar", "Bordj El Bahri",
-    "Bordj El Kiffan", "Dar El Beïda", "El Marsa", "Mohammadia",
-    "Baba Hassen", "Douera", "Draria", "El Achour", "Khraicia",
-    "Bachdjerrah", "Bourouba", "El Harrach", "Oued Smar", "Belouizdad",
-    "El Magharia", "Hussein Dey", "Kouba", "H'raoua", "Reghaïa",
-    "Rouïba", "Mahelma", "Rahmania", "Souidania", "Staoueli", "Zeralda"
+    "Alger-Centre","El Madania","El Mouradia","Sidi M'Hamed","Bab El Oued","Bologhine",
+    "Casbah","Oued Koriche","Raïs Hamidou","Baraki","Les Eucalyptus","Sidi Moussa",
+    "Bir Mourad Raïs","Birkhadem","Djasr Kasentina","Hydra","Saoula","Birtouta",
+    "Ouled Chebel","Tessala El Merdja","Ben Aknoun","Beni Messous","Bouzareah","El Biar",
+    "Aïn Benian","Chéraga","Dely Ibrahim","El Hammamet","Ouled Fayet","Aïn Taya",
+    "Bab Ezzouar","Bordj El Bahri","Bordj El Kiffan","Dar El Beïda","El Marsa",
+    "Mohammadia","Baba Hassen","Douera","Draria","El Achour","Khraicia","Bachdjerrah",
+    "Bourouba","El Harrach","Oued Smar","Belouizdad","El Magharia","Hussein Dey",
+    "Kouba","H'raoua","Reghaïa","Rouïba","Mahelma","Rahmania","Souidania","Staoueli","Zeralda"
   ];
 
   bool _validatePhone(String phone) {
     final regExp = RegExp(r'^(06|07|05)\d{8}$');
     return regExp.hasMatch(phone);
-  }
-
-  bool _isFormValid() {
-    return nameCtrl.text.trim().isNotEmpty &&
-        phoneCtrl.text.trim().isNotEmpty &&
-        selectedAge.isNotEmpty &&
-        selectedGender.isNotEmpty &&
-        selectedNeedType.isNotEmpty &&
-        selectedBloodGroup.isNotEmpty &&
-        selectedCommune != null;
   }
 
   @override
@@ -77,6 +64,7 @@ class _PostRequestFormState extends State<PostRequestForm> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+
             const Text("Patient Name *"),
             TextField(
               controller: nameCtrl,
@@ -95,7 +83,7 @@ class _PostRequestFormState extends State<PostRequestForm> {
                     children: [
                       const Text("Age *"),
                       DropdownButtonFormField(
-                        value: selectedAge,
+
                         items: ages.map((age) => DropdownMenuItem(
                           value: age,
                           child: Text(age),
@@ -112,7 +100,7 @@ class _PostRequestFormState extends State<PostRequestForm> {
                     children: [
                       const Text("Sex *"),
                       DropdownButtonFormField(
-                        value: selectedGender,
+
                         items: genders.map((g) => DropdownMenuItem(
                           value: g,
                           child: Text(g),
@@ -130,29 +118,15 @@ class _PostRequestFormState extends State<PostRequestForm> {
             const Text("Need Type *"),
             Wrap(
               spacing: 8,
-              runSpacing: 8,
               children: needTypes.map((type) {
                 final selected = type == selectedNeedType;
-                return SizedBox(
-                  height: 40,
-                  child: ChoiceChip(
-                    label: Text(
-                      type,
-                      textAlign: TextAlign.center,
-                    ),
-                    selected: selected,
-                    showCheckmark: false,
-                    selectedColor: Colors.red,
-                    labelStyle: TextStyle(
-                      color: selected ? Colors.white : Colors.red,
-                    ),
-                    shape: const StadiumBorder(side: BorderSide(color: Colors.red)),
-                    onSelected: (_) {
-                      setState(() {
-                        selectedNeedType = type;
-                      });
-                    },
-                  ),
+                return ChoiceChip(
+                  label: Text(type),
+                  selectedColor: Colors.red,
+                  labelStyle: TextStyle(color: selected ? Colors.white : Colors.red),
+                  shape: const StadiumBorder(side: BorderSide(color: Colors.red)),
+                  selected: selected,
+                  onSelected: (_) => setState(() => selectedNeedType = type),
                 );
               }).toList(),
             ),
@@ -162,26 +136,15 @@ class _PostRequestFormState extends State<PostRequestForm> {
             const Text("Blood Group *"),
             Wrap(
               spacing: 8,
-              runSpacing: 8,
               children: bloodGroups.map((bg) {
                 final selected = bg == selectedBloodGroup;
-                return SizedBox(
-                  width: 60,
-                  height: 40,
-                  child: ChoiceChip(
-                    label: Text(
-                      bg,
-                      textAlign: TextAlign.center,
-                    ),
-                    selected: selected,
-                    showCheckmark: false,
-                    selectedColor: Colors.red,
-                    labelStyle: TextStyle(
-                      color: selected ? Colors.white : Colors.red,
-                    ),
-                    shape: const StadiumBorder(side: BorderSide(color: Colors.red)),
-                    onSelected: (_) => setState(() => selectedBloodGroup = bg),
-                  ),
+                return ChoiceChip(
+                  label: Text(bg),
+                  selectedColor: Colors.red,
+                  labelStyle: TextStyle(color: selected ? Colors.white : Colors.red),
+                  shape: const StadiumBorder(side: BorderSide(color: Colors.red)),
+                  selected: selected,
+                  onSelected: (_) => setState(() => selectedBloodGroup = bg),
                 );
               }).toList(),
             ),
@@ -206,7 +169,7 @@ class _PostRequestFormState extends State<PostRequestForm> {
 
             const Text("Location *"),
             DropdownButtonFormField<String>(
-              value: selectedCommune,
+
               hint: const Text("Select a Location"),
               items: communes.map((commune) {
                 return DropdownMenuItem(
@@ -229,44 +192,45 @@ class _PostRequestFormState extends State<PostRequestForm> {
               child: ElevatedButton(
                 style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
                 onPressed: () async {
-                  if (!_isFormValid()) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Veuillez remplir tous les champs !')),
-                    );
-                    return;
-                  }
-
-                  if (!_validatePhone(phoneCtrl.text.trim())) {
+                  final phone = phoneCtrl.text.trim();
+                  if (!_validatePhone(phone)) {
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(content: Text('Numéro de téléphone invalide !')),
                     );
                     return;
                   }
 
+                  // Créer la requête
                   final request = {
                     'name': nameCtrl.text.trim(),
                     'age': selectedAge,
                     'gender': selectedGender,
                     'needType': selectedNeedType,
                     'bloodGroup': selectedBloodGroup,
-                    'phone': phoneCtrl.text.trim(),
-                    'location': selectedCommune!,
+                    'phone': phone,
+                    'location': selectedCommune ?? '',
                   };
 
-                  await DatabaseHelper.instance.insertRequest(request);
+                  // Inserer la requête et récupérer son ID
+                  final requestId = await DatabaseHelper.instance.insertRequest(request);
+
+                  // Envoyer notifications aux donneurs
+                  await DatabaseHelper.instance.sendRequestNotifications(requestId);
 
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Request published')),
+                    const SnackBar(content: Text('Request published and notifications sent')),
                   );
 
+                  // Retour à Home
                   Navigator.pushReplacement(
                     context,
-                    MaterialPageRoute(builder: (context) => const HomePage()),
+                    MaterialPageRoute(builder: (context) => const MainPage()),
                   );
                 },
                 child: const Text("Publish", style: TextStyle(fontSize: 18)),
               ),
             ),
+
           ],
         ),
       ),

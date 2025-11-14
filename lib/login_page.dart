@@ -28,7 +28,8 @@ class _LoginPageState extends State<LoginPage> {
     setState(() => isLoading = true);
 
     final db = DatabaseHelper.instance;
-    final user = await db.getCurrentUser(email, password);
+    final user = await db.loginUser(email, password);
+
 
     setState(() => isLoading = false);
 

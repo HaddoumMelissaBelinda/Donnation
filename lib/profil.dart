@@ -113,19 +113,19 @@ class ProfilPage extends StatelessWidget {
                       ],
                     ),
                   ),
-        GestureDetector(
-          onTap: () {
-            // Naviguer vers la page de connexion
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => const LoginPage()),
-            );
-          },
-          child: const CircleAvatar(
-            radius: 45,
-            child: Icon(Icons.person, size: 45),
-          ),
-        ),
+                  GestureDetector(
+                    onTap: () {
+                      // Naviguer vers la page de connexion
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => const LoginPage()),
+                      );
+                    },
+                    child: const CircleAvatar(
+                      radius: 45,
+                      child: Icon(Icons.person, size: 45),
+                    ),
+                  ),
 
 
                 ],

@@ -1,8 +1,7 @@
-import 'mainPage.dart';
 import 'package:flutter/material.dart';
+import 'mainPage.dart';
 import 'profil_donor.dart';
 import 'package:Donnation/database_helper.dart';
-
 
 class FindDonorPage extends StatefulWidget {
   const FindDonorPage({super.key});
@@ -10,8 +9,19 @@ class FindDonorPage extends StatefulWidget {
   @override
   State<FindDonorPage> createState() => _FindDonorPageState();
 }
-  final List<Map<String, String>> donors = [
+
+class _FindDonorPageState extends State<FindDonorPage> {
+  final TextEditingController searchController = TextEditingController();
+
+  // Exemple de patient connecté (à remplacer par le vrai)
+  final Map<String, dynamic> currentPatient = {
+    'id': 1,
+    'name': 'Patient Test',
+  };
+
+  final List<Map<String, dynamic>> donors = [
     {
+      'id': 2,
       'name': 'Sarah Benali',
       'location': 'Algiers, Algeria',
       'blood': 'A+',
@@ -19,6 +29,7 @@ class FindDonorPage extends StatefulWidget {
       'phone': '0661112233'
     },
     {
+      'id': 3,
       'name': 'Yucef Rezgui',
       'location': 'Tizi Ouzou, Algeria',
       'blood': 'B+',
@@ -26,6 +37,7 @@ class FindDonorPage extends StatefulWidget {
       'phone': '+213661112233'
     },
     {
+      'id': 4,
       'name': 'Ramy Ghoumari',
       'location': 'Medea, Algeria',
       'blood': 'A-',
@@ -33,6 +45,7 @@ class FindDonorPage extends StatefulWidget {
       'phone': '+213661112233'
     },
     {
+      'id': 5,
       'name': 'Mahdi Cheurfa',
       'location': 'Bejaia, Algeria',
       'blood': 'AB+',
@@ -40,6 +53,7 @@ class FindDonorPage extends StatefulWidget {
       'phone': '+213661112233'
     },
     {
+      'id': 6,
       'name': 'Islam Benali',
       'location': 'Algiers, Algeria',
       'blood': 'O+',
@@ -47,8 +61,7 @@ class FindDonorPage extends StatefulWidget {
       'phone': '+213661112233'
     },
   ];
-class _FindDonorPageState extends State<FindDonorPage> {
-  final TextEditingController searchController = TextEditingController();
+
   List<Map<String, dynamic>> searchResults = [];
 
   @override
@@ -59,10 +72,20 @@ class _FindDonorPageState extends State<FindDonorPage> {
 
   Future<void> _search() async {
     final query = searchController.text.trim();
-    final results = await DatabaseHelper.instance.searchUsers(query);
-    setState(() {
-      searchResults = results;
-    });
+    if (query.isEmpty) {
+      setState(() {
+        searchResults = donors;
+      });
+    } else {
+      setState(() {
+        searchResults = donors
+            .where((donor) =>
+        donor['name'].toLowerCase().contains(query.toLowerCase()) ||
+            donor['location'].toLowerCase().contains(query.toLowerCase()) ||
+            donor['blood'].toLowerCase().contains(query.toLowerCase()))
+            .toList();
+      });
+    }
   }
 
   @override
@@ -70,7 +93,7 @@ class _FindDonorPageState extends State<FindDonorPage> {
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: Colors.black),
+          icon: const Icon(Icons.arrow_back, color: Colors.black),
           onPressed: () {
             Navigator.of(context).pushReplacement(
               MaterialPageRoute(builder: (_) => const MainPage()),
@@ -83,21 +106,17 @@ class _FindDonorPageState extends State<FindDonorPage> {
         ),
         backgroundColor: Colors.white,
         elevation: 0,
-        actions: [
-          IconButton(
-            icon: Icon(Icons.filter_list, color: Colors.red),
-            onPressed: () {},
-          ),
-        ],
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
             TextField(
+              controller: searchController,
+              onChanged: (_) => _search(),
               decoration: InputDecoration(
                 hintText: 'Search a Donator...',
-                prefixIcon: Icon(Icons.search),
+                prefixIcon: const Icon(Icons.search),
                 filled: true,
                 fillColor: Colors.grey[200],
                 border: OutlineInputBorder(
@@ -107,12 +126,11 @@ class _FindDonorPageState extends State<FindDonorPage> {
               ),
             ),
             const SizedBox(height: 20),
-            // 📋 Liste des donneurs
             Expanded(
               child: ListView.builder(
-                itemCount: donors.length,
+                itemCount: searchResults.length,
                 itemBuilder: (context, index) {
-                  final donor = donors[index];
+                  final donor = searchResults[index];
                   return Card(
                     margin: const EdgeInsets.symmetric(vertical: 8),
                     shape: RoundedRectangleBorder(
@@ -122,11 +140,11 @@ class _FindDonorPageState extends State<FindDonorPage> {
                     child: ListTile(
                       contentPadding: const EdgeInsets.all(10),
                       leading: CircleAvatar(
-                        backgroundImage: AssetImage(donor['image']!),
+                        backgroundImage: AssetImage(donor['image'] ?? 'assets/default_avatar.png'),
                         radius: 25,
                       ),
                       title: Text(
-                        donor['name']!,
+                        donor['name'] ?? 'Unknown',
                         style: const TextStyle(
                             fontWeight: FontWeight.bold, fontSize: 16),
                       ),
@@ -135,15 +153,15 @@ class _FindDonorPageState extends State<FindDonorPage> {
                         children: [
                           Row(
                             children: [
-                              Icon(Icons.location_on, size: 16, color: Colors.grey),
+                              const Icon(Icons.location_on, size: 16, color: Colors.grey),
                               const SizedBox(width: 4),
-                              Text(donor['location']!),
+                              Text(donor['location'] ?? 'Unknown'),
                             ],
                           ),
                           const SizedBox(height: 2),
                           Row(
                             children: [
-                              Icon(Icons.phone, size: 16, color: Colors.grey),
+                              const Icon(Icons.phone, size: 16, color: Colors.grey),
                               const SizedBox(width: 4),
                               Text(donor['phone'] ?? 'N/A'),
                             ],
@@ -157,7 +175,7 @@ class _FindDonorPageState extends State<FindDonorPage> {
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Text(
-                          donor['blood']!,
+                          donor['blood'] ?? '--',
                           style: const TextStyle(
                             color: Colors.white,
                             fontWeight: FontWeight.bold,
@@ -171,7 +189,10 @@ class _FindDonorPageState extends State<FindDonorPage> {
                           shape: const RoundedRectangleBorder(
                             borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
                           ),
-                          builder: (_) => DonorProfileSheet(donor: donor),
+                          builder: (_) => DonorProfileSheet(
+                            donor: donor,
+                            patient: currentPatient,
+                          ),
                         );
                       },
                     ),
