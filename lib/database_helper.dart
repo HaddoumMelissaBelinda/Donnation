@@ -1,8 +1,8 @@
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
-import 'dart:convert';       // for utf8
-import 'package:crypto/crypto.dart'; // for sha256
-
+import 'dart:convert';
+import 'package:crypto/crypto.dart';
+import 'package:flutter/material.dart';
 
 class DatabaseHelper {
   static final DatabaseHelper instance = DatabaseHelper._init();
@@ -19,16 +19,23 @@ class DatabaseHelper {
   Future<Database> _initDB(String filePath) async {
     final dbPath = await getDatabasesPath();
     final path = join(dbPath, filePath);
+
     return await openDatabase(
       path,
-      version: 1,
+      version: 2,
       onCreate: _createDB,
+      onUpgrade: (db, oldVersion, newVersion) async {
+        if (oldVersion < 2) {
+          await db.execute('ALTER TABLE notifications ADD COLUMN senderId INTEGER');
+          await db.execute('ALTER TABLE notifications ADD COLUMN senderName TEXT');
+        }
+      },
     );
   }
 
 
   Future _createDB(Database db, int version) async {
-    // Table requests
+    // Requests
     await db.execute('''
       CREATE TABLE requests(
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -42,235 +49,137 @@ class DatabaseHelper {
       )
     ''');
 
-    // Table notifications
-    // Création initiale de la table
+    // Notifications
     await db.execute('''
-  CREATE TABLE notifications (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    senderId INTEGER,
-    senderName TEXT,
-    receiverId INTEGER NOT NULL,
-    type TEXT,
-    message TEXT NOT NULL,
-    location TEXT,
-    bloodGroup TEXT,
-    status TEXT,
-    timestamp TEXT NOT NULL
-  )
-''');
-
-    // Table users (optionnelle, si tu veux gérer login)
-    await db.execute('''
-CREATE TABLE users(
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  fullName TEXT NOT NULL,
-  gender TEXT NOT NULL,
-  birthDate TEXT NOT NULL,
-  bloodGroup TEXT NOT NULL,
-  address TEXT NOT NULL,
-  email TEXT NOT NULL UNIQUE,
-  phone TEXT NOT NULL,
-  password TEXT NOT NULL,
-  healthCondition TEXT NOT NULL,
-  isLoggedIn INTEGER DEFAULT 0
-)
+      CREATE TABLE notifications (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        senderId INTEGER,
+        senderName TEXT,
+        receiverId INTEGER NOT NULL,
+        type TEXT,
+        message TEXT NOT NULL,
+        location TEXT,
+        bloodGroup TEXT,
+        status TEXT,
+        timestamp TEXT NOT NULL
+      )
     ''');
+
+    // Users
+    await db.execute('''
+      CREATE TABLE users(
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        fullName TEXT NOT NULL,
+        gender TEXT NOT NULL,
+        birthDate TEXT NOT NULL,
+        bloodGroup TEXT NOT NULL,
+        address TEXT NOT NULL,
+        email TEXT NOT NULL UNIQUE,
+        phone TEXT NOT NULL,
+        password TEXT NOT NULL,
+        healthCondition TEXT NOT NULL,
+        isLoggedIn INTEGER DEFAULT 0
+      )
+    ''');
+
+    // Utilisateur test
+    await db.insert('users', {
+      'fullName': 'Test Donor',
+      'gender': 'Male',
+      'birthDate': '1990-01-01',
+      'bloodGroup': 'A+',
+      'address': 'Alger-Centre',
+      'email': 'testdonor@mail.com',
+      'phone': '0600000000',
+      'password': hashPassword('123456'),
+      'healthCondition': 'Good',
+      'isLoggedIn': 1
+    });
   }
 
-// ---------------- Méthodes Sign Up ----------------
-
-  // Hash du mot de passe
+  // ---------------- UTILS ----------------
   String hashPassword(String password) {
     final bytes = utf8.encode(password);
     final digest = sha256.convert(bytes);
     return digest.toString();
   }
 
-  // Vérifier si l'email existe déjà
+  // ---------------- USERS ----------------
   Future<Map<String, dynamic>?> getUserByEmail(String email) async {
     final db = await instance.database;
-    final result = await db.query(
-      'users',
-      where: 'email = ?',
-      whereArgs: [email],
-    );
-    if (result.isNotEmpty) return result.first;
+    final res = await db.query('users', where: 'email = ?', whereArgs: [email]);
+    if (res.isNotEmpty) return res.first;
     return null;
   }
 
-  // Insérer un nouvel utilisateur
   Future<int> insertUser(Map<String, dynamic> userData) async {
     final db = await instance.database;
-
-    // Hasher le mot de passe avant insertion
     userData['password'] = hashPassword(userData['password']);
-
     return await db.insert('users', userData);
   }
 
-  // Sign Up principal
   Future<Map<String, dynamic>> signUp(Map<String, dynamic> userData) async {
-    try {
-      // Vérifier si l'email existe
-      final existingUser = await getUserByEmail(userData['email']);
-      if (existingUser != null) {
-        return {
-          'success': false,
-          'message': 'Cet email est déjà utilisé',
-        };
-      }
-
-      // Insérer l'utilisateur
-      final userId = await insertUser(userData);
-
-      return {
-        'success': true,
-        'message': 'Inscription réussie',
-        'userId': userId,
-      };
-    } catch (e) {
-      return {
-        'success': false,
-        'message': 'Erreur lors de l\'inscription: $e',
-      };
+    final existingUser = await getUserByEmail(userData['email']);
+    if (existingUser != null) {
+      return {'success': false, 'message': 'Cet email est déjà utilisé'};
     }
-  }
-
-
-  // ---------------- Méthodes Requests ----------------
-  Future<int> insertRequest(Map<String, dynamic> row) async {
-    final db = await instance.database;
-    return await db.insert('requests', row);
-  }
-
-  // ---------------- Méthodes Notifications ----------------
-  // Insérer une notification
-  Future<int> insertNotification(Map<String, dynamic> data) async {
-    final db = await instance.database;
-    return await db.insert('notifications', data);
-  }
-
-  // Récupérer toutes les notifications (sans filtrer)
-  Future<List<Map<String, dynamic>>> getAllNotifications() async {
-    final db = await instance.database;
-    final result = await db.query(
-      'notifications',
-      orderBy: 'timestamp DESC', // les plus récentes en premier
-    );
-    return result;
-  }
-
-  Future<void> sendRequestNotifications(int requestId) async {
-    final db = await database;
-
-    // Récupérer uniquement les utilisateurs qui sont des donneurs
-    final donors = await db.query(
-      'users',
-      where: 'type = ?',
-      whereArgs: ['Donor'],
-    );
-
-    for (var donor in donors) {
-      await insertNotification({
-        'senderId': null,
-        'senderName': 'System',
-        'receiverId': donor['id'], // id du donneur
-        'type': 'request',
-        'message': 'Un patient a besoin de sang !',
-        'status': 'pending',
-        'timestamp': DateTime.now().toIso8601String(),
-      });
-    }
-  }
-
-
-
-  // Mettre à jour le statut d'une notification
-  Future<int> updateNotificationStatus(int id, String status) async {
-    final db = await instance.database;
-    return await db.update(
-      'notifications',
-      {'status': status},
-      where: 'id = ?',
-      whereArgs: [id],
-    );
-  }
-
-  // ---------------- Méthodes Users ----------------
-  Future<Map<String, dynamic>?> getCurrentUser(String email, String password) async {
-    final db = await instance.database;
-
-    final result = await db.query(
-      'users',
-      where: 'email = ? AND password = ?',
-      whereArgs: [email, password],
-    );
-
-    if (result.isNotEmpty) {
-      return result.first;
-    }
-    return null;
+    final id = await insertUser(userData);
+    return {'success': true, 'message': 'Inscription réussie', 'userId': id};
   }
 
   Future<Map<String, dynamic>?> loginUser(String email, String password) async {
-    final db = await database;
+    final db = await instance.database;
+    final hashed = hashPassword(password);
     final res = await db.query(
-      'utilisateur',
-      where: 'email = ? AND mot_de_passe = ?',
-      whereArgs: [email, password],
+      'users',
+      where: 'email = ? AND password = ?',
+      whereArgs: [email, hashed],
     );
     if (res.isNotEmpty) return res.first;
     return null;
   }
 
-
-  /// Marquer un utilisateur comme connecté
   Future<void> markUserAsLoggedIn(int userId) async {
     final db = await instance.database;
-    await db.update(
-      'users',
-      {'isLoggedIn': 1},
-      where: 'id = ?',
-      whereArgs: [userId],
-    );
+    await db.update('users', {'isLoggedIn': 1}, where: 'id = ?', whereArgs: [userId]);
   }
-//-----------------search donors----------
-  Future<List<Map<String, dynamic>>> searchUsers(String query) async {
+
+  // ---------------- REQUESTS ----------------
+  Future<int> insertRequest(Map<String, dynamic> request) async {
     final db = await instance.database;
+    return await db.insert('requests', request);
+  }
 
-    if (query.isEmpty) {
-      // Si la barre de recherche est vide → renvoie tous les enregistrements
-      return await db.query('users');
-    }
+  // ---------------- NOTIFICATIONS ----------------
+  Future<int> insertNotification(Map<String, dynamic> data) async {
+    final db = await instance.database;
+    return await db.insert('notifications', data);
+  }
 
-    // Rechercher dans plusieurs colonnes
+  Future<List<Map<String, dynamic>>> getNotificationsForUser(int userId) async {
+    final db = await instance.database;
     return await db.query(
-      'users',
-      where: '''
-      name LIKE ? OR
-      age LIKE ? OR
-      gender LIKE ? OR
-      needType LIKE ? OR
-      bloodGroup LIKE ? OR
-      phone LIKE ? OR
-      location LIKE ?
-    ''',
-      whereArgs: [
-        '%$query%',
-        '%$query%',
-        '%$query%',
-        '%$query%',
-        '%$query%',
-        '%$query%',
-        '%$query%'
-      ],
+      'notifications',
+      where: 'receiverId = ?',
+      whereArgs: [userId],
+      orderBy: 'timestamp DESC',
     );
   }
 
-
-  // ---------------- Close DB ----------------
-  Future close() async {
+  Future<int> updateNotificationStatus(int id, String status) async {
     final db = await instance.database;
-    await db.close();
+    return await db.update('notifications', {'status': status}, where: 'id = ?', whereArgs: [id]);
+  }
+
+  Future<void> sendRequestNotifications(int requestId) async {
+    await insertNotification({
+      'senderId': null,
+      'senderName': 'System',
+      'receiverId': 1,
+      'type': 'request',
+      'message': 'Un patient a besoin de sang !',
+      'status': 'pending',
+      'timestamp': DateTime.now().toIso8601String(),
+    });
   }
 }

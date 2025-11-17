@@ -23,7 +23,7 @@ class _MainPageState extends State<MainPage> {
     _pages = [
       HomePage(onNavigate: _onItemTapped),
       FindDonorPage(),
-      NotificationsPage(), // 👈 ajoute un ID ici
+      NotificationsPage(),
       const ProfilPage(),
     ];
   }
