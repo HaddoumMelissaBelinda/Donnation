@@ -22,14 +22,8 @@ class DatabaseHelper {
 
     return await openDatabase(
       path,
-      version: 2,
+      version: 1,
       onCreate: _createDB,
-      onUpgrade: (db, oldVersion, newVersion) async {
-        if (oldVersion < 2) {
-          await db.execute('ALTER TABLE notifications ADD COLUMN senderId INTEGER');
-          await db.execute('ALTER TABLE notifications ADD COLUMN senderName TEXT');
-        }
-      },
     );
   }
 
@@ -145,11 +139,27 @@ class DatabaseHelper {
   }
 
   // ---------------- REQUESTS ----------------
-  Future<int> insertRequest(Map<String, dynamic> request) async {
+  Future<int> insertRequest(Map<String, dynamic> row) async {
+      print('$row');
+      final db = await instance.database;
+      final result = await db.insert('requests', row);
+      return result;
+  }
+  // ---------------- GET ALL USERS ----------------
+  Future<List<Map<String, dynamic>>> getAllUsers() async {
     final db = await instance.database;
-    return await db.insert('requests', request);
+    return await db.query('users');
   }
 
+// ---------------- GET DONORS (utilisateurs connectés) ----------------
+  Future<List<Map<String, dynamic>>> getDonors() async {
+    final db = await instance.database;
+    return await db.query(
+        'users',
+        where: 'isLoggedIn = ?',
+        whereArgs: [1]
+    );
+  }
   // ---------------- NOTIFICATIONS ----------------
   Future<int> insertNotification(Map<String, dynamic> data) async {
     final db = await instance.database;
@@ -181,5 +191,9 @@ class DatabaseHelper {
       'status': 'pending',
       'timestamp': DateTime.now().toIso8601String(),
     });
+  }
+  Future close() async {
+    final db = await instance.database;
+    await db.close();
   }
 }

@@ -1,3 +1,4 @@
+import 'package:Donnation/home_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'database_helper.dart';
@@ -21,7 +22,7 @@ class _PostRequestFormState extends State<PostRequestForm> {
 
   final List<String> ages = List.generate(60, (i) => (i + 18).toString());
   final List<String> genders = ["Male", "Female"];
-  final List<String> needTypes = ["Blood", "Platelets", "Bone Marrow", "Plasma"];
+  final List<String> needTypes = ["Blood", "Platelets", "Plasma", "Bone Marrow"];
   final List<String> bloodGroups = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
 
   String? selectedCommune;
@@ -40,6 +41,16 @@ class _PostRequestFormState extends State<PostRequestForm> {
   bool _validatePhone(String phone) {
     final regExp = RegExp(r'^(06|07|05)\d{8}$');
     return regExp.hasMatch(phone);
+  }
+
+  bool _isFormValid() {
+    return nameCtrl.text.trim().isNotEmpty &&
+        phoneCtrl.text.trim().isNotEmpty &&
+        selectedAge.isNotEmpty &&
+        selectedGender.isNotEmpty &&
+        selectedNeedType.isNotEmpty &&
+        selectedBloodGroup.isNotEmpty &&
+        selectedCommune != null;
   }
 
   @override
@@ -118,33 +129,57 @@ class _PostRequestFormState extends State<PostRequestForm> {
             const Text("Need Type *"),
             Wrap(
               spacing: 8,
+              runSpacing: 8,
               children: needTypes.map((type) {
                 final selected = type == selectedNeedType;
-                return ChoiceChip(
-                  label: Text(type),
-                  selectedColor: Colors.red,
-                  labelStyle: TextStyle(color: selected ? Colors.white : Colors.red),
-                  shape: const StadiumBorder(side: BorderSide(color: Colors.red)),
-                  selected: selected,
-                  onSelected: (_) => setState(() => selectedNeedType = type),
+                return SizedBox(
+                  height: 40,
+                  child: ChoiceChip(
+                    label: Text(
+                      type,
+                      textAlign: TextAlign.center,
+                    ),
+                    selected: selected,
+                    showCheckmark: false,
+                    selectedColor: Colors.red,
+                    labelStyle: TextStyle(
+                      color: selected ? Colors.white : Colors.red,
+                    ),
+                    shape: const StadiumBorder(side: BorderSide(color: Colors.red)),
+                    onSelected: (_) {
+                      setState(() {
+                        selectedNeedType = type;
+                      });
+                    },
+                  ),
                 );
               }).toList(),
             ),
-
             const SizedBox(height: 20),
 
             const Text("Blood Group *"),
             Wrap(
               spacing: 8,
+              runSpacing: 8,
               children: bloodGroups.map((bg) {
                 final selected = bg == selectedBloodGroup;
-                return ChoiceChip(
-                  label: Text(bg),
-                  selectedColor: Colors.red,
-                  labelStyle: TextStyle(color: selected ? Colors.white : Colors.red),
-                  shape: const StadiumBorder(side: BorderSide(color: Colors.red)),
-                  selected: selected,
-                  onSelected: (_) => setState(() => selectedBloodGroup = bg),
+                return SizedBox(
+                  width: 60,
+                  height: 40,
+                  child: ChoiceChip(
+                    label: Text(
+                      bg,
+                      textAlign: TextAlign.center,
+                    ),
+                    selected: selected,
+                    showCheckmark: false,
+                    selectedColor: Colors.red,
+                    labelStyle: TextStyle(
+                      color: selected ? Colors.white : Colors.red,
+                    ),
+                    shape: const StadiumBorder(side: BorderSide(color: Colors.red)),
+                    onSelected: (_) => setState(() => selectedBloodGroup = bg),
+                  ),
                 );
               }).toList(),
             ),
@@ -169,7 +204,7 @@ class _PostRequestFormState extends State<PostRequestForm> {
 
             const Text("Location *"),
             DropdownButtonFormField<String>(
-
+              value: selectedCommune,
               hint: const Text("Select a Location"),
               items: communes.map((commune) {
                 return DropdownMenuItem(
@@ -192,8 +227,14 @@ class _PostRequestFormState extends State<PostRequestForm> {
               child: ElevatedButton(
                 style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
                 onPressed: () async {
-                  final phone = phoneCtrl.text.trim();
-                  if (!_validatePhone(phone)) {
+                  if (!_isFormValid()) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Veuillez remplir tous les champs !')),
+                    );
+                    return;
+                  }
+
+                  if (!_validatePhone(phoneCtrl.text.trim())) {
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(content: Text('Numéro de téléphone invalide !')),
                     );
@@ -207,10 +248,9 @@ class _PostRequestFormState extends State<PostRequestForm> {
                     'gender': selectedGender,
                     'needType': selectedNeedType,
                     'bloodGroup': selectedBloodGroup,
-                    'phone': phone,
-                    'location': selectedCommune ?? '',
+                    'phone': phoneCtrl.text.trim(),
+                    'location': selectedCommune!,
                   };
-
                   // Inserer la requête et récupérer son ID
                   final requestId = await DatabaseHelper.instance.insertRequest(request);
 
@@ -218,13 +258,12 @@ class _PostRequestFormState extends State<PostRequestForm> {
                   await DatabaseHelper.instance.sendRequestNotifications(requestId);
 
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Request published and notifications sent')),
+                    const SnackBar(content: Text('Request published')),
                   );
 
-                  // Retour à Home
                   Navigator.pushReplacement(
                     context,
-                    MaterialPageRoute(builder: (context) => const MainPage()),
+                    MaterialPageRoute(builder: (context) => const HomePage()),
                   );
                 },
                 child: const Text("Publish", style: TextStyle(fontSize: 18)),
