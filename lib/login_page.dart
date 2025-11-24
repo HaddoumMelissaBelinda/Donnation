@@ -2,9 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:Donnation/database_helper.dart';
 import 'mainPage.dart';
 import 'SignUp.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class LoginPage extends StatefulWidget {
-  const LoginPage({super.key});
+  const LoginPage({Key? key}) : super(key: key);
 
   @override
   State<LoginPage> createState() => _LoginPageState();
@@ -15,41 +16,36 @@ class _LoginPageState extends State<LoginPage> {
   final TextEditingController passwordController = TextEditingController();
   bool isLoading = false;
 
-  Future<void> login() async {
-    final email = emailController.text.trim();
-    final password = passwordController.text.trim();
-
-    if (email.isEmpty || password.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Veuillez remplir tous les champs')),
-      );
-      return;
-    }
-
-    setState(() => isLoading = true);
-
-    final db = DatabaseHelper.instance;
-    final user = await db.loginUser(email, password);
-
-
-    setState(() => isLoading = false);
-
+  // Fonction login
+  Future<void> login(String email, String password) async {
+    final user = await DatabaseHelper.instance.loginUser(email, password);
     if (user != null) {
-      await db.markUserAsLoggedIn(user['id']);
+      int userId = user['id'];
+
+      // Stocker la session localement
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      await prefs.setInt('userId', userId);
+      await prefs.setBool('isLoggedIn', true);
+
+      // Mettre à jour la DB
+      await DatabaseHelper.instance.markUserAsLoggedIn(userId);
+
+      // Rediriger vers MainPage
+      if (!mounted) return;
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (_) => const MainPage()),
       );
     } else {
+      // Email ou mot de passe incorrect
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Email ou mot de passe incorrect'),
-          backgroundColor: Colors.red,
-        ),
+        const SnackBar(content: Text("Email or password is incorrect")),
       );
     }
   }
-  // Méthode pour naviguer vers la page d'inscription
+
+  // Naviguer vers la page d'inscription
   void _navigateToSignUp() {
     Navigator.push(
       context,
@@ -103,14 +99,27 @@ class _LoginPageState extends State<LoginPage> {
               width: double.infinity,
               height: 50,
               child: ElevatedButton(
-                onPressed: isLoading ? null : login,
+                onPressed: isLoading
+                    ? null
+                    : () async {
+                        setState(() {
+                          isLoading = true;
+                        });
+                        await login(
+                          emailController.text.trim(),
+                          passwordController.text.trim(),
+                        );
+                        setState(() {
+                          isLoading = false;
+                        });
+                      },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.red,
                 ),
                 child: isLoading
                     ? const CircularProgressIndicator(
-                  color: Colors.white,
-                )
+                        color: Colors.white,
+                      )
                     : const Text('Sign In'),
               ),
             ),
@@ -120,7 +129,7 @@ class _LoginPageState extends State<LoginPage> {
               children: [
                 const Text("Don't have an account? "),
                 TextButton(
-                  onPressed: _navigateToSignUp, // Lien vers la page d'inscription
+                  onPressed: _navigateToSignUp,
                   child: const Text(
                     'Sign Up',
                     style: TextStyle(

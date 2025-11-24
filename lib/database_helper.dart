@@ -137,7 +137,10 @@ class DatabaseHelper {
     final db = await instance.database;
     await db.update('users', {'isLoggedIn': 1}, where: 'id = ?', whereArgs: [userId]);
   }
-
+Future<void> markUserAsLoggedOut(int userId) async {
+  final db = await instance.database;
+  await db.update('users', {'isLoggedIn': 0}, where: 'id = ?', whereArgs: [userId]);
+}
   // ---------------- REQUESTS ----------------
   Future<int> insertRequest(Map<String, dynamic> row) async {
       final db = await instance.database;

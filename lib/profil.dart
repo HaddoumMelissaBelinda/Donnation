@@ -2,10 +2,19 @@ import 'package:flutter/material.dart';
 import 'MainPage.dart';
 import 'login_page.dart';
 import 'SignUp.dart';
-
+import 'package:shared_preferences/shared_preferences.dart';
 class ProfilPage extends StatelessWidget {
   const ProfilPage({super.key});
-
+   Future<void> logout(BuildContext context) async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    await prefs.clear(); // Supprime toutes les infos de session
+    // Redirection vers la page login et suppression de la pile
+    Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(builder: (context) => const LoginPage()),
+      (route) => false,
+    );
+  }
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -17,6 +26,9 @@ class ProfilPage extends StatelessWidget {
             Navigator.of(context).pushAndRemoveUntil(
               MaterialPageRoute(builder: (context) => const MainPage()),
                   (route) => false,
+       
+        // ✅ Bouton logout en haut à droite
+        
             );
 
           },
@@ -25,6 +37,12 @@ class ProfilPage extends StatelessWidget {
         title: const Text("Profile", style: TextStyle(color: Colors.black)),
         backgroundColor: Colors.white,
         elevation: 0,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.logout, color: Colors.black),
+            onPressed: () => logout(context),
+          ),
+        ],
       ),
       body: SingleChildScrollView(
         child: Center(

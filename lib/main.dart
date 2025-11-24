@@ -1,9 +1,11 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'mainPage.dart';
 import 'package:path/path.dart' as p; // alias pour éviter le conflit
 import 'package:sqflite/sqflite.dart';
-
+import 'database_helper.dart';
+import 'login_page.dart';
 // Fonction pour supprimer la DB
 Future<void> resetDatabase() async {
   WidgetsFlutterBinding.ensureInitialized(); // garantit l'initialisation avant DB
@@ -45,13 +47,27 @@ class _SplashScreenState extends State<SplashScreen> {
     _navigateToMainPage();
   }
 
-  Future<void> _navigateToMainPage() async {
-    await Future.delayed(const Duration(seconds: 3));
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(builder: (_) => const MainPage()),
-    );
+ Future<void> _navigateToMainPage() async {
+  await Future.delayed(const Duration(seconds: 3));
+
+  // 🔹 Vérifier la session avec SharedPreferences
+  final prefs = await SharedPreferences.getInstance();
+  bool? loggedIn = prefs.getBool('isLoggedIn');
+  int? userId = prefs.getInt('userId');
+
+  Widget nextPage;
+  if (loggedIn == true && userId != null) {
+    nextPage = const MainPage(); // Utilisateur connecté
+  } else {
+    nextPage = LoginPage(); // Pas connecté
   }
+
+  Navigator.pushReplacement(
+    context,
+    MaterialPageRoute(builder: (_) => nextPage),
+  );
+}
+
 
   @override
   Widget build(BuildContext context) {
