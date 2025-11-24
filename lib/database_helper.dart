@@ -2,6 +2,7 @@ import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
 import 'dart:convert';
 import 'package:crypto/crypto.dart';
+import 'package:flutter/material.dart';
 
 class DatabaseHelper {
   static final DatabaseHelper instance = DatabaseHelper._init();
@@ -32,6 +33,7 @@ class DatabaseHelper {
     await db.execute('''
       CREATE TABLE requests(
         id INTEGER PRIMARY KEY AUTOINCREMENT,
+        userId INTEGER NOT NULL,
         name TEXT NOT NULL,
         age TEXT NOT NULL,
         gender TEXT NOT NULL,
@@ -39,7 +41,8 @@ class DatabaseHelper {
         bloodGroup TEXT NOT NULL,
         phone TEXT NOT NULL,
         location TEXT NOT NULL,
-        date TEXT NOT NULL
+        date TEXT NOT NULL,
+        FOREIGN KEY (userId) REFERENCES users(id)
       )
     ''');
 
@@ -75,20 +78,6 @@ class DatabaseHelper {
         isLoggedIn INTEGER DEFAULT 0
       )
     ''');
-
-    // Utilisateur test
-    await db.insert('users', {
-      'fullName': 'Test Donor',
-      'gender': 'Male',
-      'birthDate': '1990-01-01',
-      'bloodGroup': 'A+',
-      'address': 'Alger-Centre',
-      'email': 'testdonor@mail.com',
-      'phone': '0600000000',
-      'password': hashPassword('123456'),
-      'healthCondition': 'Good',
-      'isLoggedIn': 1
-    });
   }
 
   // ---------------- UTILS ----------------
@@ -138,21 +127,21 @@ class DatabaseHelper {
     await db.update('users', {'isLoggedIn': 1}, where: 'id = ?', whereArgs: [userId]);
   }
 
-  // ---------------- REQUESTS ----------------
+
   Future<int> insertRequest(Map<String, dynamic> row) async {
-      final db = await instance.database;
-      row['date'] = DateTime.now().toIso8601String();
-      print('$row');
-      final result = await db.insert('requests', row);
-      return result;
+    final db = await instance.database;
+    row['date'] = DateTime.now().toIso8601String();
+    print('$row');
+    final result = await db.insert('requests', row);
+    print('Inserted request ID: $result');
+    return result;
   }
-  // ---------------- GET ALL USERS ----------------
+
   Future<List<Map<String, dynamic>>> getAllUsers() async {
     final db = await instance.database;
     return await db.query('users');
   }
 
-// ---------------- GET DONORS (utilisateurs connectés) ----------------
   Future<List<Map<String, dynamic>>> getDonors() async {
     final db = await instance.database;
     return await db.query(

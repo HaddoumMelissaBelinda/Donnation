@@ -1,11 +1,11 @@
-import 'package:Donnation/home_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'database_helper.dart';
 import 'MainPage.dart';
 
 class PostRequestForm extends StatefulWidget {
-  const PostRequestForm({super.key});
+  final Map<String, dynamic>? userData;
+  const PostRequestForm({super.key, this.userData});
 
   @override
   State<PostRequestForm> createState() => _PostRequestFormState();
@@ -62,7 +62,7 @@ class _PostRequestFormState extends State<PostRequestForm> {
           onPressed: () {
             Navigator.pushReplacement(
               context,
-              MaterialPageRoute(builder: (context) => const MainPage()),
+              MaterialPageRoute(builder: (context) => MainPage(userData: widget.userData)),
             );
           },
         ),
@@ -204,7 +204,7 @@ class _PostRequestFormState extends State<PostRequestForm> {
 
             const Text("Location *"),
             DropdownButtonFormField<String>(
-              value: selectedCommune,
+              initialValue: selectedCommune,
               hint: const Text("Select a Location"),
               items: communes.map((commune) {
                 return DropdownMenuItem(
@@ -227,6 +227,13 @@ class _PostRequestFormState extends State<PostRequestForm> {
               child: ElevatedButton(
                 style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
                 onPressed: () async {
+                  if (widget.userData == null) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Erreur: Utilisateur non connecté. Veuillez vous reconnecter.')),
+                    );
+                    return;
+                  }
+
                   if (!_isFormValid()) {
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(content: Text('Veuillez remplir tous les champs !')),
@@ -243,14 +250,16 @@ class _PostRequestFormState extends State<PostRequestForm> {
 
                   // Créer la requête
                   final request = {
+                    'userId': widget.userData!['id'],
                     'name': nameCtrl.text.trim(),
                     'age': selectedAge,
                     'gender': selectedGender,
                     'needType': selectedNeedType,
                     'bloodGroup': selectedBloodGroup,
                     'phone': phoneCtrl.text.trim(),
-                    'location': selectedCommune!,
+                    'location': selectedCommune ?? '',
                   };
+                  print('User ID: ${widget.userData!['id']}');
                   // Inserer la requête et récupérer son ID
                   final requestId = await DatabaseHelper.instance.insertRequest(request);
 
@@ -263,13 +272,12 @@ class _PostRequestFormState extends State<PostRequestForm> {
 
                   Navigator.pushReplacement(
                     context,
-                    MaterialPageRoute(builder: (context) => const MainPage()),
+                    MaterialPageRoute(builder: (context) => MainPage(userData: widget.userData)),
                   );
                 },
                 child: const Text("Publish", style: TextStyle(fontSize: 18)),
               ),
             ),
-
           ],
         ),
       ),

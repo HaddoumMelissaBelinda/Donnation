@@ -22,7 +22,7 @@ class _HomePageState extends State<HomePage> {
   @override
   void initState() {
     super.initState();
-    cleanOldRequests(); 
+    cleanOldRequests();
     loadData();
   }
 
@@ -41,8 +41,7 @@ class _HomePageState extends State<HomePage> {
     final database = await db.database;
 
     final req = await database.query(
-      "requests",
-      orderBy: "date DESC", 
+      "requests",// Les récents en premier
     );
 
     final usrs = await db.getAllUsers();
@@ -52,10 +51,16 @@ class _HomePageState extends State<HomePage> {
       users = usrs;
     });
   }
-
-  String getUserName(int index) {
+  String getUserName(Map<String, dynamic> request) {
     if (users.isEmpty) return "Unknown User";
-    return users[index % users.length]['fullName'];
+
+    final userId = request['userId'];
+    final user = users.firstWhere(
+            (user) => user['id'] == userId,
+        orElse: () => {'fullName': 'Unknown User'}
+    );
+
+    return user['fullName'];
   }
 
   String timeAgo(String dateString) {
@@ -122,7 +127,7 @@ class _HomePageState extends State<HomePage> {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => PostRequestForm(),
+                          builder: (context) => PostRequestForm(userData: widget.userData),
                         ),
                       ).then((_) => loadData());
                     },
@@ -173,12 +178,12 @@ class _HomePageState extends State<HomePage> {
                           isScrollControlled: true,
                           builder: (_) => RequestProfileSheet(
                             request: requests[i],
-                            userName: getUserName(i),
+                            userName: getUserName(requests[i]),
                           ),
                         );
                       },
                       child: DonatorItem(
-                        name: getUserName(i),
+                        name: getUserName(requests[i]),
                         location: requests[i]['location'],
                         bloodType: requests[i]['bloodGroup'],
                         imageAsset: 'assets/profile.png',

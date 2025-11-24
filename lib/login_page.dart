@@ -38,7 +38,7 @@ class _LoginPageState extends State<LoginPage> {
       await db.markUserAsLoggedIn(user['id']);
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (_) => const MainPage()),
+        MaterialPageRoute(builder: (_) =>MainPage(userData: user)),
       );
     } else {
       ScaffoldMessenger.of(context).showSnackBar(

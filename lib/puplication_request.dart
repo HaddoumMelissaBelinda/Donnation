@@ -28,11 +28,10 @@ class RequestProfileSheet extends StatelessWidget {
       );
     }
   }
-
   @override
   Widget build(BuildContext context) {
     final width = MediaQuery.of(context).size.width;
-    final height = 500.0; 
+    final height = 500.0;
 
     return Container(
       width: width,
@@ -43,8 +42,8 @@ class RequestProfileSheet extends StatelessWidget {
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-        
           Container(
             width: 50,
             height: 5,
@@ -54,24 +53,9 @@ class RequestProfileSheet extends StatelessWidget {
               borderRadius: BorderRadius.circular(10),
             ),
           ),
-      
-          Center(
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(50),
-              child: SizedBox(
-                width: 100,  
-                height: 100, 
-                child: Image.asset(
-                  'assets/profile.png',
-                  fit: BoxFit.cover, 
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(height: 10),
           Center(
             child: Text(
-              userName,
+              'Request Information',
               style: const TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
@@ -83,6 +67,14 @@ class RequestProfileSheet extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                Text(
+                  'Published by: $userName',
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 16,
+                  ),
+                ),
+                const SizedBox(height: 10),
                 Text("Age: ${request['age'] ?? '--'}"),
                 Text("Gender: ${request['gender'] ?? '--'}"),
                 Text("Need Type: ${request['needType'] ?? '--'}"),

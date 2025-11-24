@@ -7,7 +7,8 @@ import 'SignUp.dart';
 import 'post_a_request.dart';
 
 class MainPage extends StatefulWidget {
-  const MainPage({super.key});
+  final Map<String, dynamic>? userData;
+  const MainPage({super.key , this.userData});
 
   @override
   State<MainPage> createState() => _MainPageState();
@@ -21,7 +22,7 @@ class _MainPageState extends State<MainPage> {
   void initState() {
     super.initState();
     _pages = [
-      HomePage(onNavigate: _onItemTapped),
+      HomePage(userData: widget.userData,onNavigate: _onItemTapped),
       FindDonorPage(),
       NotificationsPage(),
       const ProfilPage(),
@@ -32,7 +33,7 @@ class _MainPageState extends State<MainPage> {
     if (index == 2) {
       Navigator.push(
         context,
-        MaterialPageRoute(builder: (_) => const PostRequestForm()),
+        MaterialPageRoute(builder: (_) => PostRequestForm(userData: widget.userData)),
       );
       return;
     }
