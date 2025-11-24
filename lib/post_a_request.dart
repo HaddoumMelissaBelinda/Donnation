@@ -1,11 +1,11 @@
-import 'package:Donnation/home_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'database_helper.dart';
 import 'MainPage.dart';
 
 class PostRequestForm extends StatefulWidget {
-  const PostRequestForm({super.key});
+  final Map<String, dynamic>? userData;
+  const PostRequestForm({super.key, this.userData});
 
   @override
   State<PostRequestForm> createState() => _PostRequestFormState();
@@ -243,13 +243,14 @@ class _PostRequestFormState extends State<PostRequestForm> {
 
                   // Créer la requête
                   final request = {
+                    'user_id': widget.userData?['id'],
                     'name': nameCtrl.text.trim(),
                     'age': selectedAge,
                     'gender': selectedGender,
                     'needType': selectedNeedType,
                     'bloodGroup': selectedBloodGroup,
                     'phone': phoneCtrl.text.trim(),
-                    'location': selectedCommune!,
+                    'location': selectedCommune ?? "",
                   };
                   // Inserer la requête et récupérer son ID
                   final requestId = await DatabaseHelper.instance.insertRequest(request);
@@ -263,7 +264,7 @@ class _PostRequestFormState extends State<PostRequestForm> {
 
                   Navigator.pushReplacement(
                     context,
-                    MaterialPageRoute(builder: (context) => const MainPage()),
+                    MaterialPageRoute(builder: (context) => MainPage (userData: widget.userData)),
                   );
                 },
                 child: const Text("Publish", style: TextStyle(fontSize: 18)),

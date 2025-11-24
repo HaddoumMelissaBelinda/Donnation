@@ -3,7 +3,7 @@ import 'home_page.dart';
 import 'search_page.dart';
 import 'profil.dart';
 import 'notifications.dart';
-import 'SignUp.dart';
+
 import 'post_a_request.dart';
 
 class MainPage extends StatefulWidget {
