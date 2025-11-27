@@ -125,7 +125,29 @@ class DatabaseHelper {
     final db = await instance.database;
     await db.update('users', {'isLoggedIn': 1}, where: 'id = ?', whereArgs: [userId]);
   }
+  Future<void> markUserAsLoggedOut(int userId) async {
+    final db = await instance.database;
+    await db.update(
+      'users',
+      {'isLoggedIn': 0},
+      where: 'id = ?',
+      whereArgs: [userId],
+    );
+  }
 
+  Future<bool> updatePassword(String email, String newPassword) async {
+    final db = await instance.database;
+    final hashed = hashPassword(newPassword);
+
+    final res = await db.update(
+      'users',
+      {'password': hashed},
+      where: 'email = ?',
+      whereArgs: [email],
+    );
+
+    return res > 0; // true si modification OK
+  }
   // ---------------- REQUESTS ----------------
   Future<int> insertRequest(Map<String, dynamic> row) async {
     final db = await instance.database;
