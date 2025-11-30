@@ -1,5 +1,7 @@
+import 'dart:math';
 import 'package:flutter/material.dart';
-import 'package:Donnation/database_helper.dart';
+import 'email_service.dart';
+import 'verify_code.dart';
 
 class ForgotPasswordPage extends StatefulWidget {
   const ForgotPasswordPage({Key? key}) : super(key: key);
@@ -10,77 +12,43 @@ class ForgotPasswordPage extends StatefulWidget {
 
 class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
   final TextEditingController emailController = TextEditingController();
-  final TextEditingController passController = TextEditingController();
-  final TextEditingController confirmController = TextEditingController();
 
-  bool validatePassword(String password) {
-    if (password.length < 8) return false;
-    if (!password.contains(RegExp(r'[A-Z]'))) return false;
-    if (!password.contains(RegExp(r'[0-9]'))) return false;
-    if (!password.contains(RegExp(r'[@#$%^&*()_+=!?,.;:]'))) return false;
-    return true;
+  String generateCode() {
+    return (100000 + Random().nextInt(900000)).toString(); // 6 digits
   }
 
-  Future<void> resetPassword() async {
+  Future<void> sendCode() async {
     String email = emailController.text.trim();
-    String newPass = passController.text.trim();
-    String confirm = confirmController.text.trim();
-
-    if (email.isEmpty || newPass.isEmpty || confirm.isEmpty) {
+    if (email.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("All fields are required")),
+        const SnackBar(content: Text("Enter your email")),
       );
       return;
     }
 
-    if (newPass != confirm) {
+    String code = generateCode();
+
+    bool sent = await EmailService.sendResetCode(email, code);
+
+    if (!sent) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Passwords do not match")),
+        const SnackBar(content: Text("Failed to send email")),
       );
       return;
     }
 
-    if (!validatePassword(newPass)) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("Password must contain 8 chars, 1 uppercase, 1 digit, 1 special character"),
-        ),
-      );
-      return;
-    }
-
-    // Vérifier si l’email existe
-    final db = await DatabaseHelper.instance.database;
-    final user = await db.query('users', where: "email = ?", whereArgs: [email]);
-
-    if (user.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Email not found")),
-      );
-      return;
-    }
-
-    // Modifier le mot de passe
-    bool ok = await DatabaseHelper.instance.updatePassword(email, newPass);
-
-    if (!ok) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Error updating password")),
-      );
-      return;
-    }
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text("Password updated successfully!")),
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => VerifyCodePage(email: email, code: code),
+      ),
     );
-
-    Navigator.pop(context); // revenir vers login
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Reset Password")),
+      appBar: AppBar(title: const Text("Forgot Password")),
       body: Padding(
         padding: const EdgeInsets.all(20.0),
         child: Column(
@@ -89,39 +57,14 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
               controller: emailController,
               decoration: const InputDecoration(
                 border: OutlineInputBorder(),
-                hintText: "Enter your Email",
                 prefixIcon: Icon(Icons.email),
+                hintText: "Enter your Email",
               ),
             ),
-            const SizedBox(height: 15),
-            TextField(
-              controller: passController,
-              obscureText: true,
-              decoration: const InputDecoration(
-                border: OutlineInputBorder(),
-                hintText: "New Password",
-                prefixIcon: Icon(Icons.lock),
-              ),
-            ),
-            const SizedBox(height: 15),
-            TextField(
-              controller: confirmController,
-              obscureText: true,
-              decoration: const InputDecoration(
-                border: OutlineInputBorder(),
-                hintText: "Confirm Password",
-                prefixIcon: Icon(Icons.lock),
-              ),
-            ),
-            const SizedBox(height: 25),
-            SizedBox(
-              width: double.infinity,
-              height: 50,
-              child: ElevatedButton(
-                onPressed: resetPassword,
-                style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-                child: const Text("Update Password"),
-              ),
+            const SizedBox(height: 20),
+            ElevatedButton(
+              onPressed: sendCode,
+              child: const Text("Send reset code"),
             ),
           ],
         ),
