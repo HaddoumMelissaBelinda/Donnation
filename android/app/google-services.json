@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "75911745216",
+    "project_id": "donnation-542a8",
+    "storage_bucket": "donnation-542a8.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:75911745216:android:c0b229b81b3bcff835e725",
+        "android_client_info": {
+          "package_name": "com.example.flutter_application_test"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAQAKQMhDbxBaaXS9CvdS0Lzfe7kyuOd5E"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
