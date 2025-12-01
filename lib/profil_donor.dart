@@ -1,12 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'database_helper.dart';
+import 'dart:io';
+
 
 class DonorProfileSheet extends StatelessWidget {
   final Map<String, dynamic> donor;
   final Map<String, dynamic> patient;
 
   const DonorProfileSheet({Key? key, required this.donor, required this.patient}) : super(key: key);
+
+  ImageProvider _getImageProvider(String imagePath) {
+    if (imagePath.startsWith('assets/')) {
+      return AssetImage(imagePath);
+    } else if (imagePath.isNotEmpty && File(imagePath).existsSync()) {
+      return FileImage(File(imagePath));
+    } else {
+      return const AssetImage('assets/profile.png');
+    }
+  }
 
   Future<void> _makePhoneCall(BuildContext context, String phoneNumber) async {
     if (phoneNumber.isEmpty || phoneNumber == "0") {
@@ -68,9 +80,8 @@ class DonorProfileSheet extends StatelessWidget {
           const SizedBox(height: 16),
           CircleAvatar(
             radius: 50,
-            backgroundImage: donor['image'] != null
-                ? AssetImage(donor['image'])
-                : const AssetImage('assets/default_avatar.png'),
+            backgroundColor: Colors.grey[200],
+            backgroundImage: _getImageProvider(donor['image']),
           ),
           const SizedBox(height: 10),
           Text(

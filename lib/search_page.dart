@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'mainPage.dart';
 import 'profil_donor.dart';
 import 'package:Donnation/database_helper.dart';
+import 'dart:io';
 
 class FindDonorPage extends StatefulWidget {
   const FindDonorPage({super.key});
@@ -21,6 +22,15 @@ class _FindDonorPageState extends State<FindDonorPage> {
     super.initState();
     _loadDonors();
   }
+  ImageProvider _getImageProvider(String imagePath) {
+    if (imagePath.startsWith('assets/')) {
+      return AssetImage(imagePath);
+    } else if (imagePath.isNotEmpty && File(imagePath).existsSync()) {
+      return FileImage(File(imagePath));
+    } else {
+      return const AssetImage('assets/profile.png');
+    }
+  }
 
   Future<void> _loadDonors() async {
     try {
@@ -28,12 +38,15 @@ class _FindDonorPageState extends State<FindDonorPage> {
 
       setState(() {
         donors = users.map((user) {
+          String profileImagePath = user['profileImage']?.toString().trim() ?? '';
           return {
             'id': user['id'],
             'name': user['fullName'] ?? 'Unknown',
             'location': user['address'] ?? 'Unknown location',
             'blood': user['bloodGroup'] ?? '--',
-            'image': 'assets/profile.png', // Image par défaut
+            'image': (profileImagePath.isNotEmpty)
+                ? profileImagePath
+                : 'assets/profile.png',
             'phone': user['phone'] ?? 'N/A',
             'email': user['email'] ?? '',
             'healthCondition': user['healthCondition'] ?? ''
@@ -69,6 +82,7 @@ class _FindDonorPageState extends State<FindDonorPage> {
       });
     }
   }
+
 
   @override
   Widget build(BuildContext context) {
@@ -113,8 +127,9 @@ class _FindDonorPageState extends State<FindDonorPage> {
                       child: ListTile(
                         contentPadding: const EdgeInsets.all(10),
                         leading: CircleAvatar(
-                          backgroundImage: AssetImage(donor['image']),
-                          radius: 25,
+                          radius: 30,
+                          backgroundColor: Colors.grey[200],
+                          backgroundImage: _getImageProvider(donor['image']),
                         ),
                         title: Text(
                           donor['name'],

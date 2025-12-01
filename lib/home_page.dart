@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'search_page.dart';
@@ -29,7 +30,6 @@ class _HomePageState extends State<HomePage> {
   Future<void> cleanOldRequests() async {
     final db = DatabaseHelper.instance;
     final database = await db.database;
-
     await database.delete(
       "requests",
       where: "date < datetime('now', '-7 days')",
@@ -38,13 +38,7 @@ class _HomePageState extends State<HomePage> {
 
   Future<void> loadData() async {
     final db = DatabaseHelper.instance;
-    final database = await db.database;
-
-    final req = await database.query(
-      "requests",// Les récents en premier
-      orderBy: "date DESC",
-    );
-
+    final req = await db.database.then((db) => db.query("requests", orderBy: "date DESC"));
     final usersList = await db.getAllUsers();
 
     setState(() {
@@ -52,22 +46,25 @@ class _HomePageState extends State<HomePage> {
       users = usersList;
     });
   }
-  String getUserName(Map<String, dynamic> request) {
-    if (users.isEmpty) return "Unknown User";
 
-    final userId = request['userId'];
+  // Récupère le nom + image de l'utilisateur
+  Map<String, String> getUserInfo(int userId) {
+    if (users.isEmpty) {
+      return {'name': 'Inconnu', 'image': ''};
+    }
     final user = users.firstWhere(
-            (user) => user['id'] == userId,
-        orElse: () => {'fullName': 'Unknown User'}
+          (u) => u['id'] == userId,
+      orElse: () => {'fullName': 'Inconnu', 'profileImage': ''},
     );
-
-    return user['fullName'];
+    return {
+      'name': user['fullName'] ?? 'Inconnu',
+      'image': user['profileImage']?.toString() ?? '',
+    };
   }
 
   String timeAgo(String dateString) {
     final date = DateTime.tryParse(dateString);
     if (date == null) return '';
-
     final now = DateTime.now();
     final diff = now.difference(date);
 
@@ -89,12 +86,7 @@ class _HomePageState extends State<HomePage> {
             const SizedBox(height: 50),
             Padding(
               padding: const EdgeInsets.only(left: 25),
-              child: Image.asset(
-                'assets/LOGO2.png',
-                width: 220,
-                height: 80,
-                fit: BoxFit.contain,
-              ),
+              child: Image.asset('assets/LOGO2.png', width: 220, height: 80, fit: BoxFit.contain),
             ),
             const SizedBox(height: 20),
             Container(
@@ -102,17 +94,8 @@ class _HomePageState extends State<HomePage> {
               height: 190,
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(16),
-                image: const DecorationImage(
-                  image: AssetImage('assets/slider1.png'),
-                  fit: BoxFit.cover,
-                ),
-                boxShadow: const [
-                  BoxShadow(
-                    color: Color(0xFF474646),
-                    blurRadius: 2,
-                    offset: Offset(0, 3),
-                  ),
-                ],
+                image: const DecorationImage(image: AssetImage('assets/slider1.png'), fit: BoxFit.cover),
+                boxShadow: const [BoxShadow(color: Color(0xFF474646), blurRadius: 2, offset: Offset(0, 3))],
               ),
             ),
             const SizedBox(height: 30),
@@ -127,23 +110,16 @@ class _HomePageState extends State<HomePage> {
                     onTap: () {
                       Navigator.push(
                         context,
-                        MaterialPageRoute(
-                          builder: (context) => PostRequestForm(userData: widget.userData),
-                        ),
-                      ).then((_) => loadData());
+                        MaterialPageRoute(builder: (_) => PostRequestForm(userData: widget.userData)),
+                      ).then((result) {
+                        if (result == true) loadData();
+                      });
                     },
                   ),
                   RequestButton(
                     title: "Donate\nBlood",
                     image: "assets/donate.png",
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => FindDonorPage(),
-                        ),
-                      );
-                    },
+                    onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => FindDonorPage())),
                   ),
                 ],
               ),
@@ -155,40 +131,27 @@ class _HomePageState extends State<HomePage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    "Requests",
-                    style: TextStyle(
-                      color: Colors.black,
-                      fontSize: 26,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
+                  const Text("Requests", style: TextStyle(color: Colors.black, fontSize: 26, fontWeight: FontWeight.bold)),
                   const SizedBox(height: 16),
                   if (requests.isEmpty)
-                    Center(
-                      child: Text(
-                        "No requests yet",
-                        style: TextStyle(fontSize: 16, color: Colors.grey),
-                      ),
-                    ),
-                  for (int i = 0; i < requests.length; i++) ...[
+                    const Center(child: Text("Aucune demande pour le moment", style: TextStyle(fontSize: 16, color: Colors.grey))),
+                  for (var request in requests) ...[
                     GestureDetector(
                       onTap: () {
+                        final userInfo = getUserInfo(request['userId']);
                         showModalBottomSheet(
                           context: context,
                           isScrollControlled: true,
                           builder: (_) => RequestProfileSheet(
-                            request: requests[i],
-                            userName: getUserName(requests[i]),
+                            request: request,
+                            userName: userInfo['name']!,
                           ),
                         );
                       },
                       child: DonatorItem(
-                        name: getUserName(requests[i]),
-                        location: requests[i]['location'],
-                        bloodType: requests[i]['bloodGroup'],
-                        imageAsset: 'assets/profile.png',
-                        timeAgoText: timeAgo(requests[i]['date']),
+                        request: request,
+                        userInfo: getUserInfo(request['userId']),
+                        timeAgoText: timeAgo(request['date']),
                       ),
                     ),
                     const SizedBox(height: 16),
@@ -203,123 +166,90 @@ class _HomePageState extends State<HomePage> {
   }
 }
 
+// WIDGET MODIFIÉ POUR AFFICHER L'IMAGE RÉELLE OU PAR DÉFAUT
 class DonatorItem extends StatelessWidget {
-  final String name;
-  final String location;
-  final String bloodType;
-  final String imageAsset;
-  final String? timeAgoText;
+  final Map<String, dynamic> request;
+  final Map<String, String> userInfo;
+  final String timeAgoText;
 
-  DonatorItem({
-    required this.name,
-    required this.location,
-    required this.bloodType,
-    required this.imageAsset,
-    this.timeAgoText,
+  const DonatorItem({
+    super.key,
+    required this.request,
+    required this.userInfo,
+    required this.timeAgoText,
   });
 
   @override
   Widget build(BuildContext context) {
+    final String? imagePath = userInfo['image'];
+
+    Widget profileImage = (imagePath != null && imagePath.isNotEmpty && File(imagePath).existsSync())
+        ? ClipRRect(
+      borderRadius: BorderRadius.circular(12),
+      child: Image.file(
+        File(imagePath),
+        width: 48,
+        height: 48,
+        fit: BoxFit.cover,
+        errorBuilder: (_, __, ___) => Image.asset('assets/profile.png', width: 48, height: 48),
+      ),
+    )
+        : Image.asset('assets/profile.png', width: 48, height: 48);
+
     return Container(
-      padding: const EdgeInsets.all(16.0),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: const Color(0xFFF1EEEE),
-        borderRadius: BorderRadius.circular(16.0),
-        border: Border.all(
-          color: const Color(0xFFECE8E8),
-          width: 2.0,
-        ),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0xFFAFAEAE),
-            blurRadius: 3,
-            offset: Offset(0, 5),
-          ),
-        ],
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFECE8E8), width: 2),
+        boxShadow: const [BoxShadow(color: Color(0xFFAFAEAE), blurRadius: 3, offset: Offset(0, 5))],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              ClipRRect(
-                borderRadius: BorderRadius.circular(12.0),
-                child: Image.asset(
-                  imageAsset,
-                  width: 48.0,
-                  height: 48.0,
-                  fit: BoxFit.cover,
-                ),
-              ),
-              const SizedBox(width: 16.0),
+              profileImage,
+              const SizedBox(width: 16),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      name,
-                      style: const TextStyle(
-                        fontSize: 16.0,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 4.0),
-                    Text(
-                      location,
-                      style: const TextStyle(
-                        fontSize: 14.0,
-                        color: Colors.grey,
-                      ),
-                    ),
+                    Text(userInfo['name']!, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                    const SizedBox(height: 4),
+                    Text(request['location'], style: const TextStyle(fontSize: 14, color: Colors.grey)),
                   ],
                 ),
               ),
               Container(
-                padding:
-                const EdgeInsets.symmetric(vertical: 4.0, horizontal: 8.0),
+                padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
                 decoration: BoxDecoration(
                   color: const Color(0xFFB31111),
-                  borderRadius: BorderRadius.circular(10.0),
-                  border: Border.all(
-                    color: const Color(0xFFE5C5C5),
-                    width: 2.0,
-                  ),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: const Color(0xFFE5C5C5), width: 2),
                 ),
                 child: Text(
-                  bloodType,
-                  style: const TextStyle(
-                    fontSize: 16.0,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFFE5C5C5),
-                  ),
+                  request['bloodGroup'],
+                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFFE5C5C5)),
                 ),
               ),
             ],
           ),
-          if (timeAgoText != null) ...[
-            const SizedBox(height: 8),
-            Text(
-              timeAgoText!,
-              style: TextStyle(fontSize: 12, color: Colors.grey[600]),
-            ),
-          ],
+          const SizedBox(height: 8),
+          Text(timeAgoText, style: TextStyle(fontSize: 12, color: Colors.grey[600])),
         ],
       ),
     );
   }
 }
 
+// RequestButton reste inchangé
 class RequestButton extends StatelessWidget {
   final String title;
   final String image;
   final VoidCallback onTap;
 
-  const RequestButton({
-    super.key,
-    required this.title,
-    required this.image,
-    required this.onTap,
-  });
+  const RequestButton({super.key, required this.title, required this.image, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -332,54 +262,13 @@ class RequestButton extends StatelessWidget {
         decoration: BoxDecoration(
           color: const Color(0xFFF6F1F1),
           borderRadius: BorderRadius.circular(18),
-          boxShadow: const [
-            BoxShadow(
-              color: Color(0xFFF6E5E5),
-              blurRadius: 3,
-              offset: Offset(0, 5),
-            ),
-          ],
+          boxShadow: const [BoxShadow(color: Color(0xFFF6E5E5), blurRadius: 3, offset: Offset(0, 5))],
         ),
         child: Stack(
           children: [
-            Positioned(
-              left: 10,
-              top: 8,
-              child: Text(
-                title,
-                style: const TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black,
-                  height: 1.2,
-                ),
-              ),
-            ),
-            const Positioned(
-              left: 8,
-              bottom: 0,
-              child: CircleAvatar(
-                radius: 20,
-                backgroundColor: Color(0xFFF6F1F1),
-                child: Icon(
-                  Icons.arrow_forward,
-                  color: Color(0xFF7A191A),
-                  size: 34,
-                ),
-              ),
-            ),
-            Positioned(
-              right: -12,
-              bottom: -13,
-              child: SizedBox(
-                width: 80,
-                height: 80,
-                child: Padding(
-                  padding: const EdgeInsets.all(6.0),
-                  child: Image.asset(image, fit: BoxFit.contain),
-                ),
-              ),
-            ),
+            Positioned(left: 10, top: 8, child: Text(title, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.black, height: 1.2))),
+            const Positioned(left: 8, bottom: 0, child: CircleAvatar(radius: 20, backgroundColor: Color(0xFFF6F1F1), child: Icon(Icons.arrow_forward, color: Color(0xFF7A191A), size: 34))),
+            Positioned(right: -12, bottom: -13, child: SizedBox(width: 80, height: 80, child: Padding(padding: const EdgeInsets.all(6), child: Image.asset(image, fit: BoxFit.contain)))),
           ],
         ),
       ),

@@ -6,7 +6,7 @@
     <uses-permission android:name="android.permission.CALL_PHONE" />
 
     <application
-        android:label="flutter_application_test"
+        android:label="DonAlgeria"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
 
