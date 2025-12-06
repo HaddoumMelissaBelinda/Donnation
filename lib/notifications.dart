@@ -9,21 +9,28 @@ class NotificationsPage extends StatefulWidget {
 }
 
 class _NotificationsPageState extends State<NotificationsPage> {
-  final int fakeLoggedUserId = 1;
+  int? loggedUserId;
   List<Map<String, dynamic>> notifications = [];
 
   @override
   void initState() {
     super.initState();
-    _loadNotifications();
+    _init();
   }
 
-  // ----------------------- LOAD NOTIFICATIONS -----------------------
-  Future<void> _loadNotifications() async {
-    final db = DatabaseHelper.instance;
-    final data = await db.getNotificationsForUser(fakeLoggedUserId);
+  Future<void> _init() async {
+    loggedUserId = await DatabaseHelper.instance.getLoggedUserId();
+    if (loggedUserId != null) {
+      _loadNotifications();
+    }
+  }
 
-    // Filtrer les notifications acceptées/refusées datant de plus de 2 jours
+  Future<void> _loadNotifications() async {
+    if (loggedUserId == null) return;
+
+    final data = await DatabaseHelper.instance.getNotificationsForUser(loggedUserId!);
+    print("Notifications brutes: $data");
+
     final now = DateTime.now();
     final filtered = data.where((notif) {
       if (notif['status'] == 'accepted' || notif['status'] == 'refused') {
@@ -33,65 +40,74 @@ class _NotificationsPageState extends State<NotificationsPage> {
       return true;
     }).toList();
 
+    print("Notifications filtrées: $filtered");
     setState(() => notifications = filtered);
   }
 
-  // ----------------------- RESPOND TO REQUEST -----------------------
+
   Future<void> _respondToRequest(Map<String, dynamic> notif, bool accepted) async {
     final db = DatabaseHelper.instance;
 
-    // Mettre à jour le status de la notification
+    // Mettre à jour le statut de la notification
     await db.updateNotificationStatus(
       notif['id'],
       accepted ? 'accepted' : 'refused',
     );
 
-    // Envoyer notification retour au patient
-    if (notif['senderId'] != null) {
+    // Message pour le patient
+    String message = accepted
+        ? "Bonne nouvelle ! Le donneur a accepté votre demande de ${notif['type']}."
+        : "Malheureusement, le donneur n'a pas pu répondre favorablement à votre demande de ${notif['type']}.";
+
+    final senderId = notif['senderId']; // patient
+    final donorName = notif['receiverName'] ?? 'Donor';
+
+    if (senderId != null) {
+      // Ajouter notification de réponse
       await db.insertNotification({
-        'senderName': 'Donor',
-        'senderId': notif['receiverId'],
-        'receiverId': notif['senderId'],
+        'senderName': donorName,
+        'senderId': notif['receiverId'], // donneur
+        'receiverId': senderId,          // patient
         'type': 'response',
-        'message': accepted
-            ? 'Your request has been accepted by the donor. Please contact him.'
-            : 'Your request has been refused by the donor.',
+        'message': message,
         'status': 'info',
         'timestamp': DateTime.now().toIso8601String(),
       });
+
+      // Récupérer FCM token du patient
+      final patientData = await db.getUserById(senderId);
+      final patientToken = patientData?['fcmToken'];
+      if (patientToken != null && patientToken.isNotEmpty) {
+        await db.sendFCM(
+          token: patientToken,
+          title: accepted ? "Réponse positive à votre demande" : "Réponse négative à votre demande",
+          body: message,
+        );
+      }
     }
 
+    // Recharger la liste des notifications
     _loadNotifications();
   }
 
-  // ----------------------- GET COLORS -----------------------
   Color _getCardColor(Map<String, dynamic> notif) {
     switch (notif['status']) {
-      case 'pending':
-        return Colors.white;
-      case 'accepted':
-        return Colors.green.shade50;
-      case 'refused':
-        return Colors.red.shade50;
-      case 'info':
-        return Colors.blue.shade50;
-      default:
-        return Colors.white;
+      case 'pending': return Colors.white;
+      case 'accepted': return Colors.green.shade50;
+      case 'refused': return Colors.red.shade50;
+      case 'info': return Colors.blue.shade50;
+      default: return Colors.white;
     }
   }
 
   Color _getSenderNameColor(Map<String, dynamic> notif) {
     switch (notif['status']) {
-      case 'accepted':
-        return Colors.green.shade800;
-      case 'refused':
-        return Colors.red.shade800;
-      default:
-        return Colors.black;
+      case 'accepted': return Colors.green.shade800;
+      case 'refused': return Colors.red.shade800;
+      default: return Colors.black;
     }
   }
 
-  // ----------------------- BUILD NOTIFICATION CARD -----------------------
   Widget _buildNotificationCard(Map<String, dynamic> notif) {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
@@ -99,47 +115,26 @@ class _NotificationsPageState extends State<NotificationsPage> {
       decoration: BoxDecoration(
         color: _getCardColor(notif),
         borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.08),
-            blurRadius: 10,
-            offset: const Offset(0, 5),
-          ),
-        ],
+        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.08), blurRadius: 10, offset: const Offset(0, 5))],
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Avatar rond
           Container(
-            width: 56,
-            height: 56,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: Colors.white,
-            ),
+            width: 56, height: 56,
+            decoration: BoxDecoration(shape: BoxShape.circle, color: Colors.white),
             child: Center(
               child: Container(
-                width: 43,
-                height: 43,
+                width: 43, height: 43,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: notif['status'] == 'pending'
-                      ? Colors.red
-                      : Colors.grey.shade400,
+                  color: notif['status'] == 'pending' ? Colors.red : Colors.grey.shade400,
                 ),
-                child: const Center(
-                  child: Icon(
-                    Icons.notifications,
-                    color: Colors.white,
-                    size: 24,
-                  ),
-                ),
+                child: const Center(child: Icon(Icons.notifications, color: Colors.white, size: 24)),
               ),
             ),
           ),
           const SizedBox(width: 14),
-          // Texte
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -155,14 +150,9 @@ class _NotificationsPageState extends State<NotificationsPage> {
                 const SizedBox(height: 4),
                 Text(
                   notif['message'] ?? '',
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Colors.grey.shade700,
-                    height: 1.3,
-                  ),
+                  style: TextStyle(fontSize: 14, color: Colors.grey.shade700, height: 1.3),
                 ),
                 const SizedBox(height: 8),
-                // Boutons Accept/Refuse
                 if (notif['type'] == 'request' && notif['status'] == 'pending')
                   Row(
                     children: [
@@ -171,18 +161,12 @@ class _NotificationsPageState extends State<NotificationsPage> {
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.green,
                           padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 10),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(30),
-                          ),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
                           elevation: 0,
                         ),
                         child: const Text(
                           "Accept",
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 14,
-                            fontWeight: FontWeight.bold,
-                          ),
+                          style: TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold),
                         ),
                       ),
                       const SizedBox(width: 10),
@@ -191,18 +175,12 @@ class _NotificationsPageState extends State<NotificationsPage> {
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.red,
                           padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 10),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(30),
-                          ),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
                           elevation: 0,
                         ),
                         child: const Text(
                           "Refuse",
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 14,
-                            fontWeight: FontWeight.bold,
-                          ),
+                          style: TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold),
                         ),
                       ),
                     ],
@@ -215,7 +193,6 @@ class _NotificationsPageState extends State<NotificationsPage> {
     );
   }
 
-  // ----------------------- BUILD PAGE -----------------------
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -229,28 +206,16 @@ class _NotificationsPageState extends State<NotificationsPage> {
         ),
         title: const Text(
           "Notifications",
-          style: TextStyle(
-            color: Colors.black,
-            fontSize: 22,
-            fontWeight: FontWeight.bold,
-          ),
+          style: TextStyle(color: Colors.black, fontSize: 22, fontWeight: FontWeight.bold),
         ),
         centerTitle: false,
       ),
       body: notifications.isEmpty
-          ? const Center(
-        child: Text(
-          'No notifications',
-          style: TextStyle(fontSize: 18, color: Colors.grey),
-        ),
-      )
+          ? const Center(child: Text('No notifications', style: TextStyle(fontSize: 18, color: Colors.grey)))
           : ListView.builder(
         padding: const EdgeInsets.only(top: 10),
         itemCount: notifications.length,
-        itemBuilder: (context, index) {
-          final notif = notifications[index];
-          return _buildNotificationCard(notif);
-        },
+        itemBuilder: (context, index) => _buildNotificationCard(notifications[index]),
       ),
     );
   }

@@ -11,6 +11,9 @@ import 'login_page.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'fcm_service.dart';
+import 'fcm_token_service.dart';
+import 'firebase_background.dart';
 
 // Instance globale
 final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
@@ -33,50 +36,56 @@ Future<void> resetDatabase() async {
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-
-  // Init Firebase
   await Firebase.initializeApp();
 
-  // Notifications en background
-  FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+  // Background handler
+  FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
 
-  // Demander permission pour notifications
-  await FirebaseMessaging.instance.requestPermission(
-    alert: true,
-    badge: true,
-    sound: true,
-  );
-  FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-    print("📩 Notification reçue (foreground): ${message.notification?.title}");
-    showLocalNotification(message); // <- ajoute cette ligne
-  });
+  // Permissions + listeners
+  await FCMService().initNotifications();
 
-  String? fcmToken = await FirebaseMessaging.instance.getToken();
-  print("📱 FCM Token: $fcmToken");
-// Initialisation notifications locales
-  const AndroidInitializationSettings initializationSettingsAndroid =
-  AndroidInitializationSettings('@mipmap/ic_launcher');
 
-  final InitializationSettings initializationSettings =
-  InitializationSettings(android: initializationSettingsAndroid);
+  // Token + stockage SQLite
+  await FCMTokenService.initFCM();
 
-  await flutterLocalNotificationsPlugin.initialize(initializationSettings);
+  // Notifications locales
+  const android = AndroidInitializationSettings('@mipmap/ic_launcher');
+  const init = InitializationSettings(android: android);
+  await flutterLocalNotificationsPlugin.initialize(init);
 
-// Créer un channel Android pour les notifications
+  // Channel unique et correct
   const AndroidNotificationChannel channel = AndroidNotificationChannel(
-    'donation_channel', // id
-    'Notifications Donnation', // nom du channel
-    description: 'Channel pour les notifications Donnation',
-    importance: Importance.high,
+    'donation_channel',
+    'Notifications Donnation',
+    description: 'Notifications pour Donnation',
+    importance: Importance.max,
   );
 
   await flutterLocalNotificationsPlugin
-      .resolvePlatformSpecificImplementation<
-      AndroidFlutterLocalNotificationsPlugin>()
+      .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
       ?.createNotificationChannel(channel);
+
+  // Foreground → afficher notification
+  FirebaseMessaging.onMessage.listen((message) {
+    const androidDetails = AndroidNotificationDetails(
+      'donation_channel',
+      'Notifications Donnation',
+      importance: Importance.high,
+      priority: Priority.high,
+    );
+
+    const notif = NotificationDetails(android: androidDetails);
+    flutterLocalNotificationsPlugin.show(
+      0,
+      message.notification?.title,
+      message.notification?.body,
+      notif,
+    );
+  });
 
   runApp(const MyApp());
 }
+
 void showLocalNotification(RemoteMessage message) async {
   const AndroidNotificationDetails androidDetails = AndroidNotificationDetails(
     'channel_id', // identifiant du channel

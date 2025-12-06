@@ -27,7 +27,7 @@ class _PostRequestFormState extends State<PostRequestForm> {
 
   String? selectedCommune;
   final List<String> communes = [
-    "Alger-Centre","El Madania","El Mouradia","Sidi M'Hamed","Bab El Oued","Bologhine",
+    "Alger","El Madania","El Mouradia","Sidi M'Hamed","Bab El Oued","Bologhine",
     "Casbah","Oued Koriche","Raïs Hamidou","Baraki","Les Eucalyptus","Sidi Moussa",
     "Bir Mourad Raïs","Birkhadem","Djasr Kasentina","Hydra","Saoula","Birtouta",
     "Ouled Chebel","Tessala El Merdja","Ben Aknoun","Beni Messous","Bouzareah","El Biar",
@@ -253,10 +253,12 @@ class _PostRequestFormState extends State<PostRequestForm> {
                     'location': selectedCommune ?? "",
                   };
                   // Inserer la requête et récupérer son ID
+                  // Inserer la requête et récupérer son ID
                   final requestId = await DatabaseHelper.instance.insertRequest(request);
 
-                  // Envoyer notifications aux donneurs
-                  await DatabaseHelper.instance.sendRequestNotifications(requestId);
+// Envoyer notifications aux donneurs
+                  await DatabaseHelper.instance.sendGeneralRequest(requestId); // <-- CORRECTION
+
 
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(content: Text('Request published')),
