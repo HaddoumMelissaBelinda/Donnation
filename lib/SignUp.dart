@@ -15,18 +15,15 @@ class _SignUpPageState extends State<SignUpPage> {
   final DatabaseHelper _dbHelper = DatabaseHelper.instance;
 
   final List<String> algeriaWilayas = [
-    "Adrar", "Chlef", "Laghouat", "Oum El Bouaghi", "Batna", "Béjaïa",
-    "Biskra", "Béchar", "Blida", "Bouira", "Tamanrasset", "Tébessa",
-    "Tlemcen", "Tiaret", "Tizi Ouzou", "Alger", "Djelfa", "Jijel",
-    "Sétif", "Saïda", "Skikda", "Sidi Bel Abbès", "Annaba",
-    "Guelma", "Constantine", "Médéa", "Mostaganem", "M'Sila",
-    "Mascara", "Ouargla", "Oran", "El Bayadh", "Illizi", "Bordj Bou Arréridj",
-    "Boumerdès", "El Tarf", "Tindouf", "Tissemsilt", "El Oued",
-    "Khenchela", "Souk Ahras", "Tipaza", "Mila", "Aïn Defla",
-    "Naâma", "Aïn Témouchent", "Ghardaïa", "Relizane",
-    "Timimoun", "Bordj Badji Mokhtar", "Ouled Djellal",
-    "Béni Abbès", "In Salah", "In Guezzam",
-    "Touggourt", "Djanet", "El M'Ghair", "El Meniaa"
+    "Alger","El Madania","El Mouradia","Sidi M'Hamed","Bab El Oued","Bologhine",
+    "Casbah","Oued Koriche","Raïs Hamidou","Baraki","Les Eucalyptus","Sidi Moussa",
+    "Bir Mourad Raïs","Birkhadem","Djasr Kasentina","Hydra","Saoula","Birtouta",
+    "Ouled Chebel","Tessala El Merdja","Ben Aknoun","Beni Messous","Bouzareah","El Biar",
+    "Aïn Benian","Chéraga","Dely Ibrahim","El Hammamet","Ouled Fayet","Aïn Taya",
+    "Bab Ezzouar","Bordj El Bahri","Bordj El Kiffan","Dar El Beïda","El Marsa",
+    "Mohammadia","Baba Hassen","Douera","Draria","El Achour","Khraicia","Bachdjerrah",
+    "Bourouba","El Harrach","Oued Smar","Belouizdad","El Magharia","Hussein Dey",
+    "Kouba","H'raoua","Reghaïa","Rouïba","Mahelma","Rahmania","Souidania","Staoueli","Zeralda"
   ];
 
 
